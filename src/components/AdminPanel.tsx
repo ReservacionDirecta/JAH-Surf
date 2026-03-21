@@ -1,7 +1,7 @@
 ﻿import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../AuthProvider";
 import { authenticatedFetch } from "../auth";
-import { LogOut, Save, Layout, DollarSign, Calendar, Image, BarChart3, Settings, Trash2, Plus, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
+import { LogOut, Save, Layout, DollarSign, Calendar, Image, BarChart3, Settings, Trash2, Plus, ArrowUp, ArrowDown, GripVertical, Menu, X } from "lucide-react";
 
 type Tab = "content" | "pricing" | "bookings" | "images" | "experience" | "reports" | "settings";
 
@@ -84,6 +84,7 @@ export const AdminPanel = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const reports = useMemo(() => {
     const totalBookings = bookings.length;
@@ -473,24 +474,69 @@ export const AdminPanel = () => {
     );
   }
 
+  const tabs = [
+    { id: "content", icon: <Layout size={20} />, label: "Contenido" },
+    { id: "pricing", icon: <DollarSign size={20} />, label: "Precios" },
+    { id: "bookings", icon: <Calendar size={20} />, label: "Reservas" },
+    { id: "images", icon: <Image size={20} />, label: "Imágenes" },
+    { id: "experience", icon: <Image size={20} />, label: "Experiencia" },
+    { id: "reports", icon: <BarChart3 size={20} />, label: "Reportes" },
+    { id: "settings", icon: <Settings size={20} />, label: "Ajustes" },
+  ];
+
+  const tabTitle: Record<Tab, string> = {
+    content: "Contenido",
+    pricing: "Precios",
+    bookings: "Reservas",
+    images: "Imágenes",
+    experience: "Experiencia",
+    reports: "Reportes",
+    settings: "Ajustes",
+  };
+
+  const handleTabChange = (id: Tab) => {
+    setActiveTab(id);
+    setMobileNavOpen(false);
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 flex">
-      <div className="w-64 glass-dark text-white p-8 flex flex-col gap-8">
+    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
+      {/* Mobile top bar */}
+      <div className="md:hidden glass-dark text-white flex items-center justify-between px-4 py-3 sticky top-0 z-30">
+        <div className="flex items-center gap-3">
+          <div className="bg-primary p-1.5 rounded-lg"><Layout className="w-5 h-5" /></div>
+          <span className="font-display font-black text-lg uppercase tracking-tighter">CMS Admin</span>
+        </div>
+        <button onClick={() => setMobileNavOpen((o) => !o)} className="p-2 rounded-lg hover:bg-white/10">
+          {mobileNavOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+      </div>
+
+      {/* Mobile nav drawer */}
+      {mobileNavOpen && (
+        <div className="md:hidden glass-dark text-white px-4 pb-4 flex flex-col gap-2 z-20">
+          {tabs.map((tab) => (
+            <button key={tab.id} onClick={() => handleTabChange(tab.id as Tab)} className={`flex items-center gap-4 p-3 rounded-xl ${activeTab === tab.id ? "bg-primary text-white" : "text-white/70 hover:bg-white/10"}`}>
+              {tab.icon}
+              <span className="font-black uppercase tracking-widest text-xs">{tab.label}</span>
+            </button>
+          ))}
+          <button onClick={logout} className="flex items-center gap-4 p-3 rounded-xl text-white/50 hover:bg-red-500/20 hover:text-red-400 mt-2 border-t border-white/10 pt-4">
+            <LogOut size={20} />
+            <span className="font-black uppercase tracking-widest text-xs">Salir</span>
+          </button>
+        </div>
+      )}
+
+      {/* Desktop sidebar */}
+      <div className="hidden md:flex w-64 flex-shrink-0 glass-dark text-white p-8 flex-col gap-8 min-h-screen sticky top-0 self-start">
         <div className="flex items-center gap-3 mb-8">
           <div className="bg-primary p-2 rounded-xl"><Layout className="w-6 h-6" /></div>
           <span className="font-display font-black text-xl uppercase tracking-tighter">CMS Admin</span>
         </div>
 
         <nav className="flex flex-col gap-4">
-          {[
-            { id: "content", icon: <Layout size={20} />, label: "Contenido" },
-            { id: "pricing", icon: <DollarSign size={20} />, label: "Precios" },
-            { id: "bookings", icon: <Calendar size={20} />, label: "Reservas" },
-            { id: "images", icon: <Image size={20} />, label: "Imagenes" },
-            { id: "experience", icon: <Image size={20} />, label: "Experiencia" },
-            { id: "reports", icon: <BarChart3 size={20} />, label: "Reportes" },
-            { id: "settings", icon: <Settings size={20} />, label: "Ajustes" },
-          ].map((tab) => (
+          {tabs.map((tab) => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id as Tab)} className={`flex items-center gap-4 p-4 rounded-2xl ${activeTab === tab.id ? "bg-primary text-white" : "text-white/70 hover:bg-white/10"}`}>
               {tab.icon}
               <span className="font-black uppercase tracking-widest text-xs">{tab.label}</span>
@@ -504,13 +550,13 @@ export const AdminPanel = () => {
         </button>
       </div>
 
-      <div className="flex-1 p-12 overflow-y-auto">
-        <header className="flex justify-between items-center mb-12">
-          <h1 className="text-4xl font-display font-black uppercase tracking-tighter">
-            {activeTab === "content" ? "Gestion de Contenido" : activeTab === "pricing" ? "Gestion de Precios" : activeTab === "bookings" ? "Reservas" : activeTab === "images" ? "Gestion de Imagenes" : activeTab === "experience" ? "Gestion de Experiencia" : activeTab === "reports" ? "Reportes" : "Ajustes"}
+      <div className="flex-1 p-4 sm:p-6 md:p-12 overflow-y-auto">
+        <header className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-8 md:mb-12">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-black uppercase tracking-tighter">
+            {tabTitle[activeTab]}
           </h1>
           {(activeTab === "content" || activeTab === "pricing" || activeTab === "bookings" || activeTab === "images" || activeTab === "experience" || activeTab === "settings") && (
-            <button onClick={activeTab === "content" ? saveContent : activeTab === "pricing" ? savePricing : activeTab === "bookings" ? saveBookings : activeTab === "images" || activeTab === "experience" ? saveContent : saveSettings} disabled={saving} className="bg-primary text-white px-8 py-3 rounded-2xl font-black flex items-center gap-2">
+            <button onClick={activeTab === "content" ? saveContent : activeTab === "pricing" ? savePricing : activeTab === "bookings" ? saveBookings : activeTab === "images" || activeTab === "experience" ? saveContent : saveSettings} disabled={saving} className="self-start sm:self-auto bg-primary text-white px-6 py-3 rounded-2xl font-black flex items-center gap-2">
               <Save size={18} /> {saving ? "Guardando..." : "Guardar"}
             </button>
           )}
@@ -841,7 +887,7 @@ export const AdminPanel = () => {
         )}
 
         {activeTab === "reports" && (
-          <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
             <div className="bg-white p-5 rounded-xl border"><p className="text-xs uppercase font-black">Reservas</p><p className="text-3xl font-black">{reports.totalBookings}</p></div>
             <div className="bg-white p-5 rounded-xl border"><p className="text-xs uppercase font-black">Confirmadas</p><p className="text-3xl font-black">{reports.confirmed}</p></div>
             <div className="bg-white p-5 rounded-xl border"><p className="text-xs uppercase font-black">Completadas</p><p className="text-3xl font-black">{reports.completed}</p></div>
