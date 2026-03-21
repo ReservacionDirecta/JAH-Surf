@@ -312,10 +312,10 @@ const About = () => {
 
 const Gallery = () => {
   const [photos, setPhotos] = useState<{ src: string; alt: string }[]>([
-    { src: "https://aistudio.google.com/_/upload/543bf123-3fb9-4789-be81-98cc9daf6bb3/attachment/1774017559.433184000/blobstore/prod/makersuite/spanner_managed/global::000054e2ea70026d:0000015f:2:000054e2ea70026d:0000000000000001::3c6976c9d7415070:000001f316d018bc:00064d75a670731f", alt: "Surf en San Bartolo" },
-    { src: "https://aistudio.google.com/_/upload/543bf123-3fb9-4789-be81-98cc9daf6bb3/attachment/1774017559.433184000/blobstore/prod/makersuite/spanner_managed/global::000054e2ea70026d:0000015f:2:000054e2ea70026d:0000000000000001::dea9602fca005901:000001f316d018bc:00064d75a670731f", alt: "Clase de surf" },
-    { src: "https://aistudio.google.com/_/upload/543bf123-3fb9-4789-be81-98cc9daf6bb3/attachment/1774017559.433184000/blobstore/prod/makersuite/spanner_managed/global::000054e2ea70026d:0000015f:2:000054e2ea70026d:0000000000000001::f8e5438df1c36153:000001f316d018bc:00064d75a670731f", alt: "Olas en San Bartolo" },
-    { src: "https://aistudio.google.com/_/upload/543bf123-3fb9-4789-be81-98cc9daf6bb3/attachment/1774017559.433184000/blobstore/prod/makersuite/spanner_managed/global::000054e2ea70026d:0000015f:2:000054e2ea70026d:0000000000000001::1b25ad2be08669a2:000001f316d018bc:00064d75a670731f", alt: "Aprendiendo a surfear" },
+    { src: "", alt: "Surf en San Bartolo" },
+    { src: "", alt: "Clase de surf" },
+    { src: "", alt: "Olas en San Bartolo" },
+    { src: "", alt: "Aprendiendo a surfear" },
   ]);
 
   useEffect(() => {
@@ -324,8 +324,8 @@ const Gallery = () => {
         const res = await fetch('/api/store/content');
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data?.galleryImages) && data.galleryImages.length > 0) {
-            setPhotos(data.galleryImages);
+          if (Array.isArray(data?.experienceImages) && data.experienceImages.length > 0) {
+            setPhotos(data.experienceImages);
           }
         }
       } catch (error) {
@@ -343,7 +343,7 @@ const Gallery = () => {
           Nuestra <span className="text-primary">Experiencia</span>
         </h2>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {photos.map((photo, i) => (
+          {photos.filter(p => p.src).map((photo, i) => (
             <motion.div 
               key={i}
               whileHover={{ scale: 1.05 }}

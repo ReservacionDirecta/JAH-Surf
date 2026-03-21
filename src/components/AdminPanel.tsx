@@ -3,7 +3,7 @@ import { useAuth } from "../AuthProvider";
 import { authenticatedFetch } from "../auth";
 import { LogOut, Save, Layout, DollarSign, Calendar, Image, BarChart3, Settings, Trash2, Plus } from "lucide-react";
 
-type Tab = "content" | "pricing" | "bookings" | "images" | "reports" | "settings";
+type Tab = "content" | "pricing" | "bookings" | "images" | "experience" | "reports" | "settings";
 
 type Booking = {
   id: string;
@@ -40,6 +40,12 @@ const defaultContent = {
       src: "https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&q=80&w=1200",
       alt: "Surf en San Bartolo",
     },
+  ] as GalleryImage[],
+  experienceImages: [
+    { id: "e1", src: "", alt: "Surf en San Bartolo" },
+    { id: "e2", src: "", alt: "Clase de surf" },
+    { id: "e3", src: "", alt: "Olas en San Bartolo" },
+    { id: "e4", src: "", alt: "Aprendiendo a surfear" },
   ] as GalleryImage[],
 };
 
@@ -88,7 +94,12 @@ export const AdminPanel = () => {
         if (contentRes.ok) {
           const contentData = await contentRes.json();
           if (contentData) {
-            setContent({ ...defaultContent, ...contentData, galleryImages: contentData.galleryImages ?? defaultContent.galleryImages });
+            setContent({ 
+              ...defaultContent, 
+              ...contentData, 
+              galleryImages: contentData.galleryImages ?? defaultContent.galleryImages,
+              experienceImages: contentData.experienceImages ?? defaultContent.experienceImages,
+            });
           }
         }
 
@@ -218,7 +229,11 @@ export const AdminPanel = () => {
       const { url } = await response.json();
 
       if (galleryId) {
-        updateGalleryItem(galleryId, { src: url });
+        if (fieldName.startsWith('experience')) {
+          updateExperienceImage(galleryId, { src: url });
+        } else {
+          updateGalleryItem(galleryId, { src: url });
+        }
       } else {
         setContent({ ...content, [fieldName]: url });
       }
@@ -228,6 +243,22 @@ export const AdminPanel = () => {
     } finally {
       setUploading(null);
     }
+  };
+
+  const updateExperienceImage = (id: string, patch: Partial<GalleryImage>) => {
+    setContent({
+      ...content,
+      experienceImages: (content.experienceImages || []).map((img: GalleryImage) =>
+        img.id === id ? { ...img, ...patch } : img,
+      ),
+    });
+  };
+
+  const removeExperienceImage = (id: string) => {
+    setContent({
+      ...content,
+      experienceImages: (content.experienceImages || []).filter((img: GalleryImage) => img.id !== id),
+    });
   };
 
   if (isLoading) {
@@ -277,6 +308,7 @@ export const AdminPanel = () => {
             { id: "pricing", icon: <DollarSign size={20} />, label: "Precios" },
             { id: "bookings", icon: <Calendar size={20} />, label: "Reservas" },
             { id: "images", icon: <Image size={20} />, label: "Imagenes" },
+            { id: "experience", icon: <Image size={20} />, label: "Experiencia" },
             { id: "reports", icon: <BarChart3 size={20} />, label: "Reportes" },
             { id: "settings", icon: <Settings size={20} />, label: "Ajustes" },
           ].map((tab) => (
@@ -296,10 +328,10 @@ export const AdminPanel = () => {
       <div className="flex-1 p-12 overflow-y-auto">
         <header className="flex justify-between items-center mb-12">
           <h1 className="text-4xl font-display font-black uppercase tracking-tighter">
-            {activeTab === "content" ? "Gestion de Contenido" : activeTab === "pricing" ? "Gestion de Precios" : activeTab === "bookings" ? "Reservas" : activeTab === "images" ? "Gestion de Imagenes" : activeTab === "reports" ? "Reportes" : "Ajustes"}
+            {activeTab === "content" ? "Gestion de Contenido" : activeTab === "pricing" ? "Gestion de Precios" : activeTab === "bookings" ? "Reservas" : activeTab === "images" ? "Gestion de Imagenes" : activeTab === "experience" ? "Gestion de Experiencia" : activeTab === "reports" ? "Reportes" : "Ajustes"}
           </h1>
-          {(activeTab === "content" || activeTab === "pricing" || activeTab === "bookings" || activeTab === "images" || activeTab === "settings") && (
-            <button onClick={activeTab === "content" ? saveContent : activeTab === "pricing" ? savePricing : activeTab === "bookings" ? saveBookings : activeTab === "images" ? saveContent : saveSettings} disabled={saving} className="bg-primary text-white px-8 py-3 rounded-2xl font-black flex items-center gap-2">
+          {(activeTab === "content" || activeTab === "pricing" || activeTab === "bookings" || activeTab === "images" || activeTab === "experience" || activeTab === "settings") && (
+            <button onClick={activeTab === "content" ? saveContent : activeTab === "pricing" ? savePricing : activeTab === "bookings" ? saveBookings : activeTab === "images" || activeTab === "experience" ? saveContent : saveSettings} disabled={saving} className="bg-primary text-white px-8 py-3 rounded-2xl font-black flex items-center gap-2">
               <Save size={18} /> {saving ? "Guardando..." : "Guardar"}
             </button>
           )}
@@ -493,6 +525,53 @@ export const AdminPanel = () => {
                     className="w-full border rounded-lg px-3 py-2" 
                   />
                   <button onClick={() => removeGalleryItem(img.id)} className="text-red-500 hover:text-red-700 inline-flex items-center gap-2"><Trash2 size={14} /> Eliminar</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "experience" && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-xl border space-y-4">
+              <h2 className="text-xl font-black uppercase tracking-wider">Galería de Experiencia</h2>
+              <p className="text-sm text-slate-600">Administra las 4 imágenes que mostrarán tu experiencia en JAH SURF</p>
+              {(content.experienceImages || []).map((img: GalleryImage, idx: number) => (
+                <div key={img.id} className="border rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-black text-sm uppercase">{idx + 1}. {img.alt}</h3>
+                  </div>
+                  {img.src && (
+                    <div className="relative w-full h-40 rounded-lg overflow-hidden border">
+                      <img src={img.src} alt={img.alt || 'Experience'} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <label className="block text-xs font-black uppercase tracking-wider">URL o Subir Archivo</label>
+                  <div className="flex gap-3">
+                    <input 
+                      value={img.src} 
+                      onChange={(e) => updateExperienceImage(img.id, { src: e.target.value })} 
+                      placeholder="https://ejemplo.com/imagen.jpg"
+                      className="flex-1 border rounded-lg px-3 py-2" 
+                    />
+                    <label className="cursor-pointer bg-slate-900 text-white px-3 py-2 rounded-lg font-medium hover:bg-slate-800 transition text-sm">
+                      {uploading === `experience-${img.id}` ? 'Subiendo...' : 'Subir'}
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], `experience-${img.id}`, img.id)}
+                        disabled={uploading !== null}
+                      />
+                    </label>
+                  </div>
+                  <label className="block text-xs font-black uppercase tracking-wider">Descripción (ALT)</label>
+                  <input 
+                    value={img.alt} 
+                    onChange={(e) => updateExperienceImage(img.id, { alt: e.target.value })} 
+                    placeholder="Descripción de la imagen"
+                    className="w-full border rounded-lg px-3 py-2" 
+                  />
                 </div>
               ))}
             </div>
