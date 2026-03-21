@@ -175,19 +175,19 @@ NODE_ENV=production
 ❌ External auth providers  
 ❌ Database ORM/query builder  
 
-## 📖 Documentación Completa
+## 📖 Documentation
 
-| Documento | Propósito | Tiempo |
-|-----------|-----------|--------|
-| QUICKSTART.md | Empezar rápido | 2 min |
-| AGENT.md | Estándares de código | 10 min |
-| SKILLS.md | Stack tecnológico | 5 min |
-| MIGRATION_FIREBASE_TO_LOCAL_AUTH.md | Detalles técnicos | 15 min |
-| IMPLEMENTATION_SUMMARY.md | Estado del proyecto | 10 min |
-| FIREBASE_CLEANUP_CHECKLIST.md | Remover Firebase | 5 min |
-| DOCUMENTATION_INDEX.md | Navegación | 2 min |
+| Doc | For... | Read Time |
+|-----|--------|-----------|
+| QUICKSTART.md | Getting started fast | 2 min |
+| AGENT.md | Code standards | 10 min |
+| SKILLS.md | Tech stack | 5 min |
+| MIGRATION_FIREBASE_TO_LOCAL_AUTH.md | Technical details | 15 min |
+| IMPLEMENTATION_SUMMARY.md | Project status | 10 min |
+| FIREBASE_CLEANUP_CHECKLIST.md | Removing Firebase | 5 min |
+| DOCUMENTATION_INDEX.md | Navigation | 2 min |
 
-## ✅ Project Status
+## ✅ Checklist
 
 - [x] Autenticación JWT implementada
 - [x] Backend Express funcional
@@ -199,7 +199,7 @@ NODE_ENV=production
 - [x] TypeScript linting OK
 - [x] GitHub repositorio sync
 
-## 🎯 Próximos Pasos
+## 🎯 Next Steps
 
 1. **Actualizar AdminPanel** - Usar `useAuth()` en lugar de `useFirebase()`
 2. **Agregar rutas protegidas** - Para content, pricing, bookings
@@ -228,6 +228,7 @@ Propietario - JAH SURF Peru. Todos los derechos reservados.
 
 ## 🔗 Links
 
+- **Live App:** [https://jahsurfperu.com](https://jahsurfperu.com) (when deployed)
 - **GitHub:** [https://github.com/ReservacionDirecta/JAH-Surf](https://github.com/ReservacionDirecta/JAH-Surf)
 - **Issues:** [Report here](https://github.com/ReservacionDirecta/JAH-Surf/issues)
 
@@ -236,4 +237,3 @@ Propietario - JAH SURF Peru. Todos los derechos reservados.
 **Built with ❤️ for JAH SURF Peru**
 
 *Last Updated: March 21, 2024 | Status: ✅ Production Ready*
-
