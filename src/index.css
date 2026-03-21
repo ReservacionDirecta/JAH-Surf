@@ -15,10 +15,20 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    overflow-x: clip;
+    overscroll-behavior-x: none;
   }
   
   body {
     @apply font-sans text-slate-900 bg-white antialiased;
+    overflow-x: hidden;
+    max-width: 100%;
+    overscroll-behavior-x: none;
+  }
+
+  #root {
+    overflow-x: clip;
+    max-width: 100%;
   }
   
   h1, h2, h3, h4, h5, h6 {
@@ -27,6 +37,11 @@
 
   code, pre {
     @apply font-mono;
+  }
+
+  :focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--color-primary) 75%, white);
+    outline-offset: 2px;
   }
 }
 
@@ -56,5 +71,102 @@
 
 .glass-modal {
   @apply bg-white/80 backdrop-blur-xl border border-white/30 shadow-2xl;
+}
+
+.theme-handmade {
+  --paper-dot-opacity: 0.03;
+  --sand-dot-opacity: 0.028;
+  --mint-dot-opacity: 0.06;
+  --ink-dot-opacity: 0.1;
+  --divider-soft: 0.12;
+  --divider-strong: 0.2;
+}
+
+.theme-handmade .section-paper :is(p, li, label, span).text-slate-500,
+.theme-handmade .section-sand :is(p, li, label, span).text-slate-500,
+.theme-handmade .section-mint :is(p, li, label, span).text-slate-500 {
+  color: rgb(71 85 105);
+}
+
+.theme-handmade .section-paper :is(p, li, label, span).text-slate-600,
+.theme-handmade .section-sand :is(p, li, label, span).text-slate-600,
+.theme-handmade .section-mint :is(p, li, label, span).text-slate-600 {
+  color: rgb(51 65 85);
+}
+
+.theme-minimal {
+  --paper-dot-opacity: 0.012;
+  --sand-dot-opacity: 0.01;
+  --mint-dot-opacity: 0.02;
+  --ink-dot-opacity: 0.05;
+  --divider-soft: 0.08;
+  --divider-strong: 0.14;
+}
+
+.section-paper {
+  background-color: #fdfcf9;
+  background-image:
+    radial-gradient(rgb(2 6 23 / var(--paper-dot-opacity, 0.03)) 0.6px, transparent 0.6px),
+    linear-gradient(180deg, #fffdfa 0%, #f8f5ef 100%);
+  background-size: 12px 12px, 100% 100%;
+}
+
+.section-sand {
+  background-color: #f8f6f1;
+  background-image:
+    radial-gradient(rgb(15 23 42 / var(--sand-dot-opacity, 0.028)) 0.7px, transparent 0.7px),
+    linear-gradient(180deg, #f8f6f1 0%, #f2eee6 100%);
+  background-size: 14px 14px, 100% 100%;
+}
+
+.section-mint {
+  background-color: #eef8f4;
+  background-image:
+    radial-gradient(rgb(16 185 129 / var(--mint-dot-opacity, 0.06)) 0.8px, transparent 0.8px),
+    linear-gradient(180deg, #eef8f4 0%, #e3f3ec 100%);
+  background-size: 16px 16px, 100% 100%;
+}
+
+.section-ink {
+  background-color: #0b1020;
+  background-image:
+    radial-gradient(rgb(148 163 184 / var(--ink-dot-opacity, 0.1)) 0.8px, transparent 0.8px),
+    linear-gradient(180deg, #0b1020 0%, #111827 100%);
+  background-size: 18px 18px, 100% 100%;
+}
+
+.section-divider {
+  position: relative;
+}
+
+.section-divider::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgb(15 23 42 / var(--divider-soft, 0.12)) 12%, rgb(15 23 42 / var(--divider-strong, 0.2)) 50%, rgb(15 23 42 / var(--divider-soft, 0.12)) 88%, transparent 100%);
+}
+
+@media (max-width: 640px) {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 

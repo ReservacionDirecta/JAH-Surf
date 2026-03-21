@@ -13,6 +13,7 @@ export const BookingForm = () => {
   const plans = PRICE_TABLES[classType];
   const selectedPlan = plans[selectedPlanIndex];
   const timeOptions = ['9hs a 11hs', '12hs a 2pm', '3pm a 5pm'];
+  const today = new Date().toISOString().split('T')[0];
 
   const totalPrice = useMemo(() => {
     return selectedPlan.price * numPeople;
@@ -55,21 +56,21 @@ export const BookingForm = () => {
     const message = `Hola JAH SURF Peru, quiero reservar una clase:\n- Tipo: ${classType}\n- Plan: ${selectedPlan.name}\n- Personas: ${numPeople}\n- Fecha: ${date}\n- Horario: ${time}\n- Total a pagar: S/ ${totalPrice}\n- Mi WhatsApp: ${whatsapp}`;
 
     const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/51904060670?text=${encodedMessage}`, '_blank');
+    window.open(`https://wa.me/51952641118?text=${encodedMessage}`, '_blank');
   };
 
   return (
-    <div className="glass p-8 rounded-[2rem] shadow-xl border border-white/20">
-      <h3 className="text-3xl font-display font-black text-slate-900 mb-8 uppercase tracking-tighter">Reserva tu Clase</h3>
+    <div className="glass p-5 sm:p-8 rounded-[2rem] shadow-xl border border-white/20">
+      <h3 className="text-2xl sm:text-3xl font-display font-black text-slate-900 mb-6 sm:mb-8 uppercase tracking-tighter">Reserva tu Clase</h3>
       <div className="grid gap-6">
         <div>
-          <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Tipo de Clase</label>
+          <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em] mb-3">Tipo de Clase</label>
           <div className="grid grid-cols-3 gap-2">
             {(['grupales', 'individuales', 'otras'] as const).map((type) => (
               <button
                 key={type}
                 onClick={() => { setClassType(type); setSelectedPlanIndex(0); }}
-                className={`py-3 px-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${classType === type ? 'bg-primary text-white' : 'bg-white text-slate-900 border border-slate-200'}`}
+                className={`min-h-11 py-3 px-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${classType === type ? 'bg-primary text-white' : 'bg-white text-slate-900 border border-slate-200'}`}
               >
                 {type}
               </button>
@@ -78,11 +79,11 @@ export const BookingForm = () => {
         </div>
 
         <div>
-          <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Plan</label>
+          <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em] mb-3">Plan</label>
           <select
             value={selectedPlanIndex}
             onChange={(e) => setSelectedPlanIndex(Number(e.target.value))}
-            className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-4 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium"
+            className="w-full bg-white border-2 border-slate-100 rounded-2xl px-5 sm:px-6 py-4 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium"
           >
             {plans.map((plan, i) => (
               <option key={i} value={i}>{plan.name} - S/ {plan.price}</option>
@@ -91,38 +92,40 @@ export const BookingForm = () => {
         </div>
 
         <div>
-          <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Personas</label>
+          <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em] mb-3">Personas</label>
           <div className="flex items-center gap-4">
             <Users className="text-primary" />
             <input
               type="number"
               min="1"
+              inputMode="numeric"
               value={numPeople}
               onChange={(e) => setNumPeople(Math.max(1, Number(e.target.value)))}
-              className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-4 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium"
+              className="w-full bg-white border-2 border-slate-100 rounded-2xl px-5 sm:px-6 py-4 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Fecha</label>
+          <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em] mb-3">Fecha</label>
           <div className="flex items-center gap-4">
             <Calendar className="text-primary" />
             <input
               type="date"
+              min={today}
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-4 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium"
+              className="w-full bg-white border-2 border-slate-100 rounded-2xl px-5 sm:px-6 py-4 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Horario</label>
+          <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em] mb-3">Horario</label>
           <select
             value={time}
             onChange={(e) => setTime(e.target.value)}
-            className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-4 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium"
+            className="w-full bg-white border-2 border-slate-100 rounded-2xl px-5 sm:px-6 py-4 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium"
           >
             {timeOptions.map((t) => (
               <option key={t} value={t}>{t}</option>
@@ -131,14 +134,16 @@ export const BookingForm = () => {
         </div>
 
         <div>
-          <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Tu WhatsApp</label>
+          <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em] mb-3">Tu WhatsApp</label>
           <div className="flex items-center gap-4">
             <Phone className="text-primary" />
             <input
               type="tel"
+              inputMode="tel"
+              autoComplete="tel"
               value={whatsapp}
               onChange={(e) => setWhatsapp(e.target.value)}
-              className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-4 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium"
+              className="w-full bg-white border-2 border-slate-100 rounded-2xl px-5 sm:px-6 py-4 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium"
               placeholder="+51 900 000 000"
             />
           </div>

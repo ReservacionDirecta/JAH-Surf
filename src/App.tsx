@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Menu, X, Waves, Instagram, Facebook, MessageCircle, MapPin, Clock, Mail, Shield, Heart, Zap, Users, Dumbbell, Leaf } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider } from './AuthProvider';
 
@@ -18,9 +18,10 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleScroll = () => {
+      if (isMobileMenuOpen) return;
       setIsScrolled(window.scrollY > 50);
       
-      const sections = ['inicio', 'nosotros', 'equipos', 'clases', 'beneficios', 'contacto'];
+      const sections = ['inicio', 'nosotros', 'experiencia', 'equipos', 'clases', 'beneficios', 'contacto'];
       const current = sections.find(section => {
         const element = document.getElementById(section);
         if (element) {
@@ -34,7 +35,43 @@ const Navbar = () => {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const previous = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      touchAction: body.style.touchAction,
+    };
+
+    setIsScrolled(true);
+    body.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.width = '100%';
+    body.style.touchAction = 'none';
+
+    return () => {
+      body.style.overflow = previous.overflow;
+      body.style.position = previous.position;
+      body.style.top = previous.top;
+      body.style.left = previous.left;
+      body.style.right = previous.right;
+      body.style.width = previous.width;
+      body.style.touchAction = previous.touchAction;
+      window.scrollTo(0, scrollY);
+    };
+  }, [isMobileMenuOpen]);
 
   const navLinks = [
     { name: 'Inicio', href: '#inicio', id: 'inicio' },
@@ -47,28 +84,28 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${isScrolled ? 'glass py-4 shadow-xl shadow-slate-900/5' : 'bg-transparent py-8'}`}>
-      <div className="container mx-auto px-6 flex justify-between items-center">
+    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled || isMobileMenuOpen ? 'glass py-3 shadow-xl shadow-slate-900/5' : 'bg-transparent py-5 md:py-8'}`}>
+      <div className="container mx-auto px-4 sm:px-6 flex justify-between items-center">
         <a href="#inicio" className="flex items-center gap-3 group">
-          <div className={`p-2 rounded-xl transition-colors ${isScrolled ? 'bg-primary text-white' : 'bg-white/10 text-white'}`}>
+          <div className={`p-2 rounded-xl transition-colors ${isScrolled || isMobileMenuOpen ? 'bg-primary text-white' : 'bg-white/10 text-white'}`}>
             <Waves className="w-6 h-6" />
           </div>
           <BrandName 
-            className={`text-2xl ${isScrolled ? 'text-slate-900' : 'text-white'}`} 
-            surfColor={isScrolled ? 'text-green-600' : 'text-white'} 
+            className={`text-2xl ${isScrolled || isMobileMenuOpen ? 'text-slate-900' : 'text-white'}`} 
+            surfColor={isScrolled || isMobileMenuOpen ? 'text-green-600' : 'text-white'} 
           />
         </a>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-10">
+        <div className="hidden md:flex items-center gap-7 lg:gap-10">
           {navLinks.map((link) => (
             <a
               key={link.name}
               href={link.href}
-              className={`text-xs font-black uppercase tracking-[0.2em] transition-all hover:text-secondary relative group ${
+              className={`text-xs font-black uppercase tracking-[0.16em] transition-all hover:text-secondary relative group ${
                 activeSection === link.id 
                   ? 'text-secondary' 
-                  : isScrolled ? 'text-slate-500' : 'text-white/70'
+                  : isScrolled ? 'text-slate-700' : 'text-white/85'
               }`}
             >
               {link.name}
@@ -76,10 +113,10 @@ const Navbar = () => {
             </a>
           ))}
           <a 
-            href="https://wa.me/51900000000" 
+            href="https://wa.me/51952641118" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/20"
+            className="bg-primary hover:bg-primary/90 text-white px-7 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/20"
           >
             RESERVAR
           </a>
@@ -87,7 +124,8 @@ const Navbar = () => {
 
         {/* Mobile Toggle */}
         <button 
-          className={`md:hidden p-3 rounded-2xl transition-colors ${isScrolled ? 'bg-slate-100 text-slate-900' : 'bg-white/10 text-white'}`}
+          aria-label={isMobileMenuOpen ? 'Cerrar menu' : 'Abrir menu'}
+          className={`md:hidden p-3 rounded-2xl transition-colors ${isScrolled || isMobileMenuOpen ? 'bg-slate-100 text-slate-900' : 'bg-white/10 text-white'}`}
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -102,10 +140,11 @@ const Navbar = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed inset-0 glass-dark z-[60] flex flex-col items-center justify-center gap-10 md:hidden"
+            className="fixed inset-0 glass-dark z-[60] flex flex-col items-center justify-center gap-8 md:hidden px-6"
           >
             <button 
-              className="absolute top-8 right-8 p-4 text-white/50 hover:text-white transition-colors"
+              aria-label="Cerrar menu"
+              className="absolute top-6 right-6 p-4 text-white/70 hover:text-white transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <X size={40} />
@@ -115,14 +154,14 @@ const Navbar = () => {
                 key={link.name}
                 href={link.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="text-4xl font-display font-black text-white uppercase tracking-tighter hover:text-primary transition-colors"
+                className="text-3xl sm:text-4xl font-display font-black text-white uppercase tracking-tighter hover:text-primary transition-colors"
               >
                 {link.name}
               </a>
             ))}
             <a 
-              href="https://wa.me/51900000000" 
-              className="bg-primary text-white px-12 py-5 rounded-[2rem] text-xl font-black uppercase tracking-widest mt-6 shadow-2xl shadow-primary/40"
+              href="https://wa.me/51952641118" 
+              className="bg-primary text-white px-10 py-4 rounded-[2rem] text-lg font-black uppercase tracking-widest mt-4 shadow-2xl shadow-primary/40"
             >
               RESERVAR AHORA
             </a>
@@ -134,9 +173,10 @@ const Navbar = () => {
 };
 
 const Hero = () => {
+  const prefersReducedMotion = useReducedMotion();
   const [content, setContent] = useState<any>({
     heroTitle: "JAH SURF",
-    heroSubtitle: "Donde el mar se encuentra con tu espíritu.",
+    heroSubtitle: "Conecta con el mar, respeta su fuerza y vive el surf como estilo de vida.",
     heroImageUrl: "https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&q=80&w=1920"
   });
 
@@ -157,27 +197,30 @@ const Hero = () => {
   }, []);
 
   return (
-    <section id="inicio" className="relative h-screen flex items-center justify-center overflow-hidden">
+    <section id="inicio" className="relative h-[100svh] min-h-[620px] md:min-h-screen flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
         <img 
           src={content.heroImageUrl || "https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&q=80&w=1920"}
           alt="Surf background" 
           className="w-full h-full object-cover scale-105"
+          fetchPriority="high"
+          loading="eager"
+          decoding="async"
           referrerPolicy="no-referrer"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/40 to-white"></div>
       </div>
       
-      <div className="container mx-auto px-6 relative z-10 text-center">
+      <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1, ease: "easeOut" }}
+          initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.95 }}
+          animate={prefersReducedMotion ? undefined : { opacity: 1, scale: 1 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
         >
-          <span className="inline-block px-4 py-1.5 glass text-white text-xs font-black uppercase tracking-[0.3em] mb-8 rounded-full">
+          <span className="inline-block px-4 py-1.5 glass text-white text-[10px] sm:text-xs font-black uppercase tracking-[0.26em] mb-6 sm:mb-8 rounded-full">
             San Bartolo, Perú
           </span>
-          <h1 className="text-6xl md:text-[10rem] font-display font-black text-white mb-8 leading-[0.85] uppercase tracking-tighter">
+          <h1 className="text-4xl sm:text-6xl md:text-8xl lg:text-[10rem] font-display font-black text-white mb-6 sm:mb-8 leading-[0.86] uppercase tracking-tighter">
             {content.heroTitle || "JAH SURF"}.
           </h1>
           <div className="flex justify-center gap-2 mb-8">
@@ -185,15 +228,15 @@ const Hero = () => {
             <div className="w-8 h-1 bg-secondary rounded-full"></div>
             <div className="w-8 h-1 bg-accent rounded-full"></div>
           </div>
-          <p className="text-xl md:text-3xl text-white mb-12 max-w-3xl mx-auto font-medium leading-relaxed [text-shadow:_0_2px_4px_rgb(0_0_0_/_50%)]">
+          <p className="text-lg sm:text-xl md:text-3xl text-white mb-10 sm:mb-12 max-w-3xl mx-auto font-medium leading-relaxed [text-shadow:_0_2px_4px_rgb(0_0_0_/_50%)]">
             {content.heroSubtitle}
           </p>
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-            <a href="#clases" className="group relative bg-primary text-white px-12 py-5 rounded-2xl font-black text-xl transition-all hover:scale-105 shadow-2xl shadow-primary/40 overflow-hidden">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center">
+            <a href="#clases" className="group relative bg-primary text-white px-8 sm:px-12 py-4 sm:py-5 rounded-2xl font-black text-base sm:text-xl transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-primary/40 overflow-hidden">
               <span className="relative z-10">RESERVAR CLASE</span>
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
             </a>
-            <a href="#nosotros" className="glass text-coal px-12 py-5 rounded-2xl font-black text-xl transition-all hover:bg-white/20 border-2 border-white/30">
+            <a href="#nosotros" className="glass text-coal px-8 sm:px-12 py-4 sm:py-5 rounded-2xl font-black text-base sm:text-xl transition-all hover:bg-white/20 active:scale-95 border-2 border-white/30">
               CONÓCENOS
             </a>
           </div>
@@ -201,9 +244,9 @@ const Hero = () => {
       </div>
       
       <motion.div 
-        animate={{ y: [0, 15, 0] }}
+        animate={prefersReducedMotion ? undefined : { y: [0, 15, 0] }}
         transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute bottom-12 left-1/2 -translate-x-1/2 text-white/30 flex flex-col items-center gap-2"
+        className="absolute bottom-10 sm:bottom-12 left-1/2 -translate-x-1/2 text-white/60 flex flex-col items-center gap-2"
       >
         <span className="text-[10px] font-black uppercase tracking-[0.2em]">Scroll</span>
         <div className="w-px h-12 bg-gradient-to-b from-white to-transparent"></div>
@@ -215,7 +258,7 @@ const Hero = () => {
 const About = () => {
   const [content, setContent] = useState<any>({
     aboutTitle: "Más que una escuela, una filosofía",
-    aboutText: "En JAH SURF Peru, el surf es el puente para reconectar con tu ser interior. Fomentamos el respeto al mar, la salud mental y el crecimiento espiritual en cada ola.",
+    aboutText: "En JAH Surf nuestra prioridad es crear primero un vínculo real con el mar y la Naturaleza. Enseñamos a respetar su poder, mantener la calma frente a lo que no controlamos y aprender técnicas para correr tabla en una experiencia segura, satisfactoria y profunda.",
     aboutImageUrl: "https://images.unsplash.com/photo-1537519646099-335112f03225?auto=format&fit=crop&q=80&w=1000",
   });
 
@@ -236,15 +279,15 @@ const About = () => {
   }, []);
 
   const pillars = [
-    { icon: <Shield className="w-12 h-12 text-primary" />, title: "Seguridad", desc: "Protocolos internacionales de rescate y supervisión constante." },
-    { icon: <Heart className="w-12 h-12 text-secondary" />, title: "Buena Onda", desc: "Comunidad vibrante donde cada sesión es una celebración." },
-    { icon: <Zap className="w-12 h-12 text-accent" />, title: "Profesionalismo", desc: "Metodología probada para todos los niveles de habilidad." },
+    { icon: <Shield className="w-12 h-12 text-primary" />, title: "Seguridad", desc: "Ponemos atención a cuidados y precauciones. Contamos con certificaciones de primeros auxilios y plan de contingencia." },
+    { icon: <Heart className="w-12 h-12 text-secondary" />, title: "Buena Onda", desc: "Nuestro estilo de instrucción es relajado y cercano, enfocado en crear una relación positiva con el mar." },
+    { icon: <Zap className="w-12 h-12 text-accent" />, title: "Profesionalismo", desc: "Respetamos los tiempos y procesos de cada alumno con enseñanza clara para todos los niveles." },
   ];
 
   return (
-    <section id="nosotros" className="py-32 bg-white overflow-hidden">
-      <div className="container mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-24 items-center">
+    <section id="nosotros" className="py-20 md:py-32 section-paper section-divider overflow-hidden">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="grid lg:grid-cols-2 gap-12 md:gap-16 lg:gap-24 items-center">
           <motion.div
             initial={{ opacity: 0, x: -60 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -255,16 +298,16 @@ const About = () => {
               <div className="w-12 h-px bg-primary"></div>
               <span className="text-primary font-black uppercase tracking-[0.2em] text-xs">Nuestra Esencia</span>
             </div>
-            <h2 className="text-5xl md:text-7xl font-display font-black text-slate-900 mb-10 leading-[0.9] uppercase tracking-tighter">
+            <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-black text-slate-900 mb-8 md:mb-10 leading-[0.92] uppercase tracking-tighter">
               {content.aboutTitle || "Más que una escuela, una filosofía"}
             </h2>
-            <p className="text-xl text-slate-500 mb-12 leading-relaxed font-medium">
+            <p className="text-base sm:text-lg md:text-xl text-slate-500 mb-10 md:mb-12 leading-relaxed font-medium">
               {content.aboutText}
             </p>
-            <div className="grid gap-10">
+            <div className="grid gap-6 md:gap-8 lg:gap-10">
               {pillars.map((p, i) => (
-                <div key={i} className="flex gap-8 items-start group">
-                  <div className="bg-slate-50 p-5 rounded-[2rem] group-hover:bg-primary/10 transition-colors duration-300">
+                <div key={i} className="flex gap-4 md:gap-6 lg:gap-8 items-start group">
+                  <div className="bg-slate-50 p-4 md:p-5 rounded-[1.5rem] md:rounded-[2rem] group-hover:bg-primary/10 transition-colors duration-300">
                     {p.icon}
                   </div>
                   <div>
@@ -288,6 +331,8 @@ const About = () => {
                 src={content.aboutImageUrl || "https://images.unsplash.com/photo-1537519646099-335112f03225?auto=format&fit=crop&q=80&w=1000"}
                 alt="Surf lesson" 
                 className="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
+                loading="lazy"
+                decoding="async"
                 referrerPolicy="no-referrer"
               />
             </div>
@@ -337,19 +382,19 @@ const Gallery = () => {
   }, []);
 
   return (
-    <section id="experiencia" className="py-32 bg-slate-50">
-      <div className="container mx-auto px-6">
-        <h2 className="text-5xl md:text-7xl font-display font-black text-slate-900 uppercase tracking-tighter mb-16 text-center">
+    <section id="experiencia" className="py-20 md:py-32 section-sand section-divider">
+      <div className="container mx-auto px-4 sm:px-6">
+        <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-black text-slate-900 uppercase tracking-tighter mb-10 md:mb-16 text-center">
           Nuestra <span className="text-primary">Experiencia</span>
         </h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
           {photos.filter(p => p.src).map((photo, i) => (
             <motion.div 
               key={i}
               whileHover={{ scale: 1.05 }}
               className="rounded-3xl overflow-hidden shadow-lg"
             >
-              <img src={photo.src} alt={photo.alt} className="w-full h-80 object-cover" referrerPolicy="no-referrer" />
+              <img src={photo.src} alt={photo.alt} className="w-full h-72 sm:h-80 object-cover" loading="lazy" decoding="async" referrerPolicy="no-referrer" />
             </motion.div>
           ))}
         </div>
@@ -360,30 +405,30 @@ const Gallery = () => {
 
 const Equipment = () => {
   return (
-    <section id="equipos" className="py-32 bg-slate-50 relative overflow-hidden">
-      <div className="container mx-auto px-6 relative z-10">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
+    <section id="equipos" className="py-20 md:py-32 section-mint section-divider relative overflow-hidden">
+      <div className="container mx-auto px-4 sm:px-6 relative z-10">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-14 md:mb-20 gap-6 md:gap-8">
           <div className="max-w-2xl">
             <div className="flex items-center gap-4 mb-6">
               <div className="w-12 h-px bg-primary"></div>
               <span className="text-primary font-black uppercase tracking-[0.2em] text-xs">Equipamiento</span>
             </div>
-            <h2 className="text-5xl md:text-7xl font-display font-black text-slate-900 leading-[0.9] uppercase tracking-tighter">
+            <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-black text-slate-900 leading-[0.92] uppercase tracking-tighter">
               Listos para <span className="text-primary">fluir</span>
             </h2>
           </div>
-          <p className="text-slate-500 text-xl max-w-md font-medium">
+          <p className="text-slate-500 text-base sm:text-lg md:text-xl max-w-md font-medium">
             No te preocupes por nada. Contamos con equipos de última generación para tu seguridad.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-12">
-          <div className="lg:col-span-7 glass p-12 md:p-16 rounded-[3rem] shadow-sm flex flex-col justify-center">
+        <div className="grid lg:grid-cols-12 gap-8 md:gap-12">
+          <div className="lg:col-span-7 glass p-8 sm:p-10 md:p-16 rounded-[2rem] md:rounded-[3rem] shadow-sm flex flex-col justify-center">
             <h3 className="text-3xl font-black mb-10 flex items-center gap-4 uppercase tracking-tight">
               <div className="bg-primary/10 p-3 rounded-2xl"><Waves className="text-primary" /></div> 
               Kit de Aventura
             </h3>
-            <div className="grid sm:grid-cols-2 gap-8">
+            <div className="grid sm:grid-cols-2 gap-6 md:gap-8">
               {[
                 { t: "Tablas Soft", d: "Diseñadas para máxima estabilidad." },
                 { t: "Pitas Pro", d: "Elásticas y ultra resistentes." },
@@ -398,7 +443,7 @@ const Equipment = () => {
             </div>
           </div>
 
-          <div className="lg:col-span-5 glass-dark text-white p-12 md:p-16 rounded-[3rem] shadow-2xl relative overflow-hidden group">
+          <div className="lg:col-span-5 glass-dark text-white p-8 sm:p-10 md:p-16 rounded-[2rem] md:rounded-[3rem] shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/30 transition-colors duration-500"></div>
             <div className="relative z-10">
               <h3 className="text-3xl font-black mb-10 flex items-center gap-4 uppercase tracking-tight">
@@ -564,7 +609,7 @@ const PricingModal = ({ isOpen, onClose, title, packages, color }) => {
 - Fecha: ${date}
 - Horario: ${time}
 - Mi WhatsApp: ${whatsapp}`;
-              window.open(`https://wa.me/51904060670?text=${encodeURIComponent(message)}`, '_blank');
+              window.open(`https://wa.me/51952641118?text=${encodeURIComponent(message)}`, '_blank');
             }}
             className={`flex items-center justify-center gap-3 w-full ${colorClasses.button} text-white text-center py-5 rounded-2xl font-black text-lg transition-all shadow-xl hover:-translate-y-1 active:translate-y-0`}
           >
@@ -626,28 +671,28 @@ const Pricing = () => {
   ];
 
   return (
-    <section id="clases" className="py-32 bg-white">
-      <div className="container mx-auto px-6">
-        <div className="text-center mb-24">
+    <section id="clases" className="py-20 md:py-32 section-paper section-divider">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="text-center mb-14 md:mb-24">
           <div className="flex items-center justify-center gap-4 mb-6">
             <div className="w-12 h-px bg-primary"></div>
             <span className="text-primary font-black uppercase tracking-[0.2em] text-xs">Membresías</span>
             <div className="w-12 h-px bg-primary"></div>
           </div>
-          <h2 className="text-5xl md:text-7xl font-display font-black text-slate-900 mb-6 uppercase tracking-tighter">
+          <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-black text-slate-900 mb-6 uppercase tracking-tighter">
             Elige tu <span className="text-primary">Ritmo</span>
           </h2>
-          <p className="text-slate-500 text-xl max-w-2xl mx-auto font-medium">
+          <p className="text-slate-500 text-base sm:text-lg md:text-xl max-w-2xl mx-auto font-medium">
             Planes flexibles diseñados para que el surf se convierta en tu nuevo estilo de vida.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-10">
+        <div className="grid lg:grid-cols-3 gap-6 md:gap-10">
           {pricingCategories.map((cat) => (
             <motion.div 
               key={cat.id}
               whileHover={{ y: -15 }}
-              className="glass p-12 rounded-[3rem] flex flex-col items-center text-center group cursor-pointer transition-all duration-500 hover:shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] hover:bg-white/80"
+              className="glass p-8 md:p-12 rounded-[2rem] md:rounded-[3rem] flex flex-col items-center text-center group cursor-pointer transition-all duration-500 hover:shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] hover:bg-white/80"
               onClick={() => setModalData(cat)}
             >
               <div className={`bg-white p-8 rounded-[2rem] shadow-sm mb-10 group-hover:scale-110 transition-all duration-500 ${
@@ -697,25 +742,25 @@ const Benefits = () => {
   ];
 
   return (
-    <section id="beneficios" className="py-32 bg-slate-950 text-white overflow-hidden relative">
+    <section id="beneficios" className="py-20 md:py-32 section-ink text-white overflow-hidden relative">
       <div className="absolute inset-0 opacity-5 pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(2,132,199,0.3),transparent_70%)]"></div>
       </div>
       
-      <div className="container mx-auto px-6 relative z-10">
-        <div className="text-center mb-24">
+      <div className="container mx-auto px-4 sm:px-6 relative z-10">
+        <div className="text-center mb-14 md:mb-24">
           <div className="flex items-center justify-center gap-4 mb-6">
             <div className="w-12 h-px bg-secondary"></div>
             <span className="text-secondary font-black uppercase tracking-[0.2em] text-xs">Transformación</span>
             <div className="w-12 h-px bg-secondary"></div>
           </div>
-          <h2 className="text-5xl md:text-7xl font-display font-black mb-6 uppercase tracking-tighter">Beneficios del <span className="text-secondary">Surf</span></h2>
-          <p className="text-white/70 text-xl max-w-2xl mx-auto font-medium">
+          <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-black mb-6 uppercase tracking-tighter">Beneficios del <span className="text-secondary">Surf</span></h2>
+          <p className="text-white/80 text-base sm:text-lg md:text-xl max-w-2xl mx-auto font-medium">
             Mucho más que un deporte, una medicina natural para tu cuerpo y mente.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
           {benefits.map((b, i) => (
             <motion.div 
               key={i}
@@ -723,7 +768,7 @@ const Benefits = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1, duration: 0.6 }}
-              className="glass-dark p-10 rounded-[2.5rem] hover:bg-white/15 transition-all duration-500 group border-white/10"
+              className="glass-dark p-7 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[2.5rem] hover:bg-white/15 transition-all duration-500 group border-white/10"
             >
               <div className="text-secondary mb-8 group-hover:scale-110 transition-transform duration-500">
                 {b.icon}
@@ -740,9 +785,9 @@ const Benefits = () => {
 
 const Contact = () => {
   return (
-    <section id="contacto" className="py-32 bg-white">
-      <div className="container mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-24">
+    <section id="contacto" className="py-20 md:py-32 section-paper section-divider">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="grid lg:grid-cols-2 gap-12 md:gap-16 lg:gap-24">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -752,35 +797,39 @@ const Contact = () => {
               <div className="w-12 h-px bg-primary"></div>
               <span className="text-primary font-black uppercase tracking-[0.2em] text-xs">Hablemos</span>
             </div>
-            <h2 className="text-5xl md:text-7xl font-display font-black text-slate-900 mb-12 leading-[0.9] uppercase tracking-tighter">
+            <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-black text-slate-900 mb-10 md:mb-12 leading-[0.92] uppercase tracking-tighter">
               ¿Listo para tu <span className="text-primary">primera ola?</span>
             </h2>
             
-            <div className="space-y-10">
+            <div className="space-y-6 md:space-y-10">
               {[
-                { icon: <MapPin />, t: "Ubicación", d: "Playa San Bartolo, Lima, Perú", color: "text-primary" },
-                { icon: <Clock />, t: "Horarios", d: "Lunes a Domingo: 7:00 AM — 7:00 PM", color: "text-secondary" },
-                { icon: <MessageCircle />, t: "WhatsApp", d: "+51 900 000 000", color: "text-accent" },
-                { icon: <Mail />, t: "Email", d: "hola@jahsurfperu.com", color: "text-primary" }
+                { icon: <MapPin />, t: "Ubicación", d: "Malecón Rivera Norte 636, San Bartolo, Lima, Perú", color: "text-primary" },
+                { icon: <Clock />, t: "Horarios", d: "Todos los días de 7:00 AM a 7:00 PM", color: "text-secondary" },
+                { icon: <MessageCircle />, t: "WhatsApp", d: "+51 952 641 118", color: "text-accent" },
+                { icon: <Mail />, t: "Email", d: "jahsamba@hotmail.com", color: "text-primary" }
               ].map((item, i) => (
-                <div key={i} className="flex gap-8 items-start group">
-                  <div className={`bg-slate-50 p-5 rounded-2xl ${item.color} group-hover:bg-slate-900 group-hover:text-white transition-all duration-300`}>
+                <div key={i} className="flex gap-4 sm:gap-6 md:gap-8 items-start group">
+                  <div className={`bg-slate-50 p-4 md:p-5 rounded-2xl ${item.color} group-hover:bg-slate-900 group-hover:text-white transition-all duration-300`}>
                     {React.cloneElement(item.icon, { size: 32 })}
                   </div>
                   <div>
                     <h4 className="font-black text-xl uppercase tracking-tight mb-1">{item.t}</h4>
-                    <p className="text-slate-500 text-lg font-medium">{item.d}</p>
+                    <p className="text-slate-600 text-base sm:text-lg font-medium">{item.d}</p>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-16 flex gap-6">
-              {[Instagram, Facebook, MessageCircle].map((Icon, i) => (
-                <a key={i} href="#" className="bg-slate-900 text-white p-5 rounded-[1.5rem] hover:bg-primary hover:scale-110 transition-all duration-300 shadow-xl shadow-slate-900/10">
-                  <Icon size={28} />
-                </a>
-              ))}
+            <div className="mt-12 md:mt-16 flex gap-4 sm:gap-6">
+              <a href="https://www.instagram.com/jahsurfperu/" target="_blank" rel="noopener noreferrer" className="bg-slate-900 text-white p-4 md:p-5 rounded-[1.2rem] md:rounded-[1.5rem] hover:bg-primary hover:scale-110 active:scale-95 transition-all duration-300 shadow-xl shadow-slate-900/10" aria-label="Instagram">
+                <Instagram size={28} />
+              </a>
+              <a href="https://www.facebook.com/jahsurfperu" target="_blank" rel="noopener noreferrer" className="bg-slate-900 text-white p-4 md:p-5 rounded-[1.2rem] md:rounded-[1.5rem] hover:bg-primary hover:scale-110 active:scale-95 transition-all duration-300 shadow-xl shadow-slate-900/10" aria-label="Facebook">
+                <Facebook size={28} />
+              </a>
+              <a href="https://wa.me/51952641118" target="_blank" rel="noopener noreferrer" className="bg-slate-900 text-white p-4 md:p-5 rounded-[1.2rem] md:rounded-[1.5rem] hover:bg-primary hover:scale-110 active:scale-95 transition-all duration-300 shadow-xl shadow-slate-900/10" aria-label="WhatsApp">
+                <MessageCircle size={28} />
+              </a>
             </div>
           </motion.div>
 
@@ -788,22 +837,22 @@ const Contact = () => {
             initial={{ opacity: 0, x: 50 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="glass p-12 md:p-16 rounded-[3.5rem] shadow-2xl shadow-slate-900/5"
+            className="glass p-6 sm:p-8 md:p-16 rounded-[2rem] md:rounded-[3.5rem] shadow-2xl shadow-slate-900/5"
           >
-            <h3 className="text-3xl font-black mb-10 uppercase tracking-tight">Envíanos un mensaje</h3>
-            <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
-              <div className="grid md:grid-cols-2 gap-8">
+            <h3 className="text-2xl sm:text-3xl font-black mb-8 md:mb-10 uppercase tracking-tight">Envíanos un mensaje</h3>
+            <form className="space-y-6 md:space-y-8" onSubmit={(e) => e.preventDefault()}>
+              <div className="grid md:grid-cols-2 gap-5 md:gap-8">
                 <div className="space-y-3">
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Nombre</label>
+                  <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em]">Nombre</label>
                   <input type="text" className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-5 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium" placeholder="Tu nombre" />
                 </div>
                 <div className="space-y-3">
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em]">WhatsApp</label>
+                  <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em]">WhatsApp</label>
                   <input type="tel" className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-5 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium" placeholder="Tu número" />
                 </div>
               </div>
               <div className="space-y-3">
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Interés</label>
+                <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em]">Interés</label>
                 <select className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-5 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium appearance-none">
                   <option>Clases Grupales</option>
                   <option>Clases Individuales</option>
@@ -811,7 +860,7 @@ const Contact = () => {
                 </select>
               </div>
               <div className="space-y-3">
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Mensaje</label>
+                <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em]">Mensaje</label>
                 <textarea className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-5 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium h-40 resize-none" placeholder="¿En qué podemos ayudarte?"></textarea>
               </div>
               <button className="w-full bg-primary text-white py-6 rounded-2xl font-black text-xl hover:bg-primary/90 transition-all shadow-2xl shadow-primary/30 hover:-translate-y-1 active:translate-y-0 uppercase tracking-widest">
@@ -827,9 +876,9 @@ const Contact = () => {
 
 const Footer = () => {
   return (
-    <footer className="glass-dark py-20 border-t border-white/5">
-      <div className="container mx-auto px-6">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-12">
+    <footer className="glass-dark py-14 md:py-20 border-t border-white/5">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-8 md:gap-12">
           <div className="flex items-center gap-3">
             <div className="bg-primary p-2 rounded-xl">
               <Waves className="text-white w-8 h-8" />
@@ -842,11 +891,11 @@ const Footer = () => {
               © 2026 <BrandName /> Peru. Todos los derechos reservados.
             </p>
             <p className="text-white/60 text-[10px] uppercase font-black tracking-[0.2em] mt-2">
-              Diseñado por <a href="#" className="text-white/80 hover:text-primary transition-colors">ChambaDigital.la</a>
+              Desarrollado por <a href="https://www.miraescuchahablaconamor.com" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-primary transition-colors">miraescuchahablaconamor.com</a>
             </p>
           </div>
           
-          <div className="flex gap-10">
+          <div className="flex gap-6 sm:gap-10">
             <a href="#" className="text-white/30 hover:text-white transition-colors text-xs uppercase font-black tracking-[0.3em]">Términos</a>
             <a href="#" className="text-white/30 hover:text-white transition-colors text-xs uppercase font-black tracking-[0.3em]">Privacidad</a>
           </div>
@@ -860,13 +909,13 @@ const Footer = () => {
 
 const Booking = () => {
   return (
-    <section id="reserva" className="py-32 bg-slate-50">
-      <div className="container mx-auto px-6">
+    <section id="reserva" className="py-20 md:py-32 section-sand section-divider">
+      <div className="container mx-auto px-4 sm:px-6">
         <div className="text-center mb-16">
-          <h2 className="text-5xl md:text-7xl font-display font-black text-slate-900 mb-6 uppercase tracking-tighter">
+          <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-black text-slate-900 mb-6 uppercase tracking-tighter">
             Reserva tu <span className="text-primary">Aventura</span>
           </h2>
-          <p className="text-slate-500 text-xl max-w-2xl mx-auto font-medium">
+          <p className="text-slate-500 text-base sm:text-lg md:text-xl max-w-2xl mx-auto font-medium">
             Elige tu clase, indica cuántas personas asistirán y asegura tu lugar en el mar.
           </p>
         </div>
@@ -886,7 +935,7 @@ export default function App() {
           <Routes>
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/" element={
-              <div className="relative">
+              <div className="relative theme-handmade">
                 <Navbar />
                 <main>
                   <Hero />
