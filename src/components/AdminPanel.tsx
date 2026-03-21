@@ -52,6 +52,7 @@ const defaultContent = {
 const defaultPricing = [
   { id: "grupales", name: "Clases Grupales", price: 96, description: "Por persona" },
   { id: "individuales", name: "Clases Individuales", price: 180, description: "Por clase" },
+  { id: "paddle", name: "Clases y Paseos en Paddle", price: 180, description: "Mismo costo que individuales" },
   { id: "otras", name: "Eventos especiales", price: 420, description: "Por grupo" },
 ];
 

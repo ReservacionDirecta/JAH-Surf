@@ -684,6 +684,19 @@ const Pricing = () => {
       ]
     },
     {
+      id: 'paddle',
+      title: "Clases y Paseos en Paddle",
+      icon: <Waves className="w-12 h-12" />,
+      color: "accent",
+      desc: "Mismo costo y mismos paquetes que clases individuales, en modalidad Paddle.",
+      packages: [
+        { name: "1 Clase x Semana", desc: "4 clases al mes", price: "S/ 691", perClass: "S/ 173" },
+        { name: "2 Clases x Semana", desc: "8 clases al mes", price: "S/ 1267", perClass: "S/ 158" },
+        { name: "3 Clases x Semana", desc: "12 clases al mes", price: "S/ 1728", perClass: "S/ 144" },
+        { name: "Clase Suelta", desc: "Sesión única intensiva", price: "S/ 187", perClass: "S/ 187" },
+      ]
+    },
+    {
       id: 'otras',
       title: "Otras Actividades",
       icon: <Waves className="w-12 h-12" />,
@@ -715,7 +728,7 @@ const Pricing = () => {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6 md:gap-10">
+        <div className="grid lg:grid-cols-2 xl:grid-cols-4 gap-6 md:gap-10">
           {pricingCategories.map((cat) => (
             <motion.div 
               key={cat.id}

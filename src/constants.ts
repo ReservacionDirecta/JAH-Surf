@@ -13,6 +13,13 @@ export const PRICE_TABLES = {
     { name: "3 clases/semana (12 al mes)", price: 1152, classesPerMonth: 12 },
     { name: "4 clases/semana (16 al mes)", price: 1440, classesPerMonth: 16 },
   ],
+  paddle: [
+    { name: "Una sola clase", price: 120, classesPerMonth: 1 },
+    { name: "1 clase/semana (4 al mes)", price: 420, classesPerMonth: 4 },
+    { name: "2 clases/semana (8 al mes)", price: 816, classesPerMonth: 8 },
+    { name: "3 clases/semana (12 al mes)", price: 1152, classesPerMonth: 12 },
+    { name: "4 clases/semana (16 al mes)", price: 1440, classesPerMonth: 16 },
+  ],
   otras: [
     { name: "Paseos en Paddle", price: 120, perPerson: true },
     { name: "Paseos en Kayak", price: 120, perPerson: true },

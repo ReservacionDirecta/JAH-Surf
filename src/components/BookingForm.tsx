@@ -3,7 +3,7 @@ import { PRICE_TABLES } from '../constants';
 import { Calendar, Users, MessageCircle, Phone } from 'lucide-react';
 
 export const BookingForm = () => {
-  const [classType, setClassType] = useState<'grupales' | 'individuales' | 'otras'>('grupales');
+  const [classType, setClassType] = useState<'grupales' | 'individuales' | 'paddle' | 'otras'>('grupales');
   const [selectedPlanIndex, setSelectedPlanIndex] = useState(0);
   const [numPeople, setNumPeople] = useState(1);
   const [date, setDate] = useState('');
@@ -65,14 +65,14 @@ export const BookingForm = () => {
       <div className="grid gap-6">
         <div>
           <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em] mb-3">Tipo de Clase</label>
-          <div className="grid grid-cols-3 gap-2">
-            {(['grupales', 'individuales', 'otras'] as const).map((type) => (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {(['grupales', 'individuales', 'paddle', 'otras'] as const).map((type) => (
               <button
                 key={type}
                 onClick={() => { setClassType(type); setSelectedPlanIndex(0); }}
                 className={`min-h-11 py-3 px-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${classType === type ? 'bg-primary text-white' : 'bg-white text-slate-900 border border-slate-200'}`}
               >
-                {type}
+                {type === 'paddle' ? 'Paddle' : type}
               </button>
             ))}
           </div>
