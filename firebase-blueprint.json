@@ -1,0 +1,88 @@
+{
+  "entities": {
+    "siteContent": {
+      "title": "Site Content",
+      "description": "Global content for the website (titles, descriptions, etc.)",
+      "type": "object",
+      "properties": {
+        "heroTitle": { "type": "string", "description": "Main title in the hero section" },
+        "heroSubtitle": { "type": "string", "description": "Subtitle in the hero section" },
+        "aboutTitle": { "type": "string", "description": "Title in the about section" },
+        "aboutText": { "type": "string", "description": "Main text in the about section" },
+        "contactEmail": { "type": "string", "format": "email", "description": "Contact email address" },
+        "contactWhatsApp": { "type": "string", "description": "Contact WhatsApp number" }
+      },
+      "required": ["heroTitle", "heroSubtitle"]
+    },
+    "pricingCategory": {
+      "title": "Pricing Category",
+      "description": "A category of pricing (e.g., Grupales, Individuales)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique ID for the category" },
+        "title": { "type": "string", "description": "Display title" },
+        "desc": { "type": "string", "description": "Description of the category" },
+        "color": { "type": "string", "enum": ["primary", "secondary", "accent"], "description": "Theme color" },
+        "packages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "desc": { "type": "string" },
+              "price": { "type": "string" },
+              "perClass": { "type": "string" }
+            }
+          }
+        }
+      },
+      "required": ["id", "title", "packages"]
+    },
+    "booking": {
+      "title": "Booking",
+      "description": "A class reservation made by a user",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "time": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "activity": { "type": "string" },
+        "plan": { "type": "string" },
+        "numPeople": { "type": "integer" },
+        "totalPrice": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "date", "whatsapp", "timestamp"]
+    },
+    "user": {
+      "title": "User",
+      "description": "User profile and roles",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["admin", "user"] }
+      },
+      "required": ["uid", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/content/main": {
+      "schema": "siteContent",
+      "description": "Main website content"
+    },
+    "/pricing/{categoryId}": {
+      "schema": "pricingCategory",
+      "description": "Pricing categories and packages"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "booking",
+      "description": "User reservations"
+    },
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "User profiles and roles"
+    }
+  }
+}

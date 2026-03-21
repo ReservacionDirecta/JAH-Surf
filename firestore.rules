@@ -1,0 +1,173 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: content
+    // Document ID: main
+    // Fields:
+    //   - heroTitle: string (required, 1-100 chars)
+    //   - heroSubtitle: string (required, 1-200 chars)
+    //   - aboutTitle: string (optional, 1-100 chars)
+    //   - aboutText: string (optional, 1-2000 chars)
+    //   - contactEmail: string (optional, email format)
+    //   - contactWhatsApp: string (optional, 1-20 chars)
+    //
+    // Collection: pricing
+    // Document ID: categoryId
+    // Fields:
+    //   - id: string (required)
+    //   - title: string (required, 1-50 chars)
+    //   - desc: string (required, 1-200 chars)
+    //   - color: string (required, enum: primary, secondary, accent)
+    //   - packages: list (required, max 10 items)
+    //     - name: string
+    //     - desc: string
+    //     - price: string
+    //     - perClass: string (optional)
+    //
+    // Collection: bookings
+    // Document ID: bookingId
+    // Fields:
+    //   - name: string (required, 1-100 chars)
+    //   - date: string (required, date format)
+    //   - time: string (required)
+    //   - whatsapp: string (required, 1-20 chars)
+    //   - activity: string (required)
+    //   - plan: string (required)
+    //   - numPeople: number (required, positive)
+    //   - totalPrice: number (required, positive)
+    //   - timestamp: string (required, date-time format)
+    //
+    // Collection: users
+    // Document ID: userId
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required, email format)
+    //   - role: string (required, enum: admin, user)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "YERCTECH@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}$");
+    }
+
+    function isValidDateTimeString(dateStr) {
+      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*Z?$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidContent(data) {
+      return hasRequiredFields(['heroTitle', 'heroSubtitle']) &&
+        data.heroTitle is string && data.heroTitle.size() > 0 && data.heroTitle.size() <= 100 &&
+        data.heroSubtitle is string && data.heroSubtitle.size() > 0 && data.heroSubtitle.size() <= 200 &&
+        (!('aboutTitle' in data) || (data.aboutTitle is string && data.aboutTitle.size() <= 100)) &&
+        (!('aboutText' in data) || (data.aboutText is string && data.aboutText.size() <= 2000)) &&
+        (!('contactEmail' in data) || isValidEmail(data.contactEmail)) &&
+        (!('contactWhatsApp' in data) || (data.contactWhatsApp is string && data.contactWhatsApp.size() <= 20));
+    }
+
+    function isValidPricing(data) {
+      return hasRequiredFields(['id', 'title', 'desc', 'color', 'packages']) &&
+        data.id is string &&
+        data.title is string && data.title.size() > 0 && data.title.size() <= 50 &&
+        data.desc is string && data.desc.size() > 0 && data.desc.size() <= 200 &&
+        data.color in ['primary', 'secondary', 'accent'] &&
+        data.packages is list && data.packages.size() <= 10;
+    }
+
+    function isValidBooking(data) {
+      return hasRequiredFields(['name', 'date', 'time', 'whatsapp', 'activity', 'plan', 'numPeople', 'totalPrice', 'timestamp']) &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+        isValidDateString(data.date) &&
+        data.whatsapp is string && data.whatsapp.size() > 0 && data.whatsapp.size() <= 20 &&
+        data.numPeople is number && data.numPeople > 0 &&
+        data.totalPrice is number && data.totalPrice >= 0 &&
+        isValidDateTimeString(data.timestamp);
+    }
+
+    function isValidUser(data) {
+      return hasRequiredFields(['uid', 'email', 'role']) &&
+        data.uid is string &&
+        isValidEmail(data.email) &&
+        data.role in ['admin', 'user'];
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Content: Public read, Admin write
+    match /content/{docId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidContent(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Pricing: Public read, Admin write
+    match /pricing/{categoryId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidPricing(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Bookings: Public create, Admin read/write, Owner read
+    match /bookings/{bookingId} {
+      allow create: if isValidBooking(request.resource.data);
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Users: Owner read/write, Admin read/write
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      // Only allow admin to create admin roles, or user to create their own 'user' role
+      allow create: if (isOwner(userId) && request.resource.data.role == 'user' && isValidUser(request.resource.data)) || 
+                      (isAdmin() && isValidUser(request.resource.data));
+      // Only allow admin to update roles
+      allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role && isValidUser(request.resource.data)) || 
+                      (isAdmin() && isValidUser(request.resource.data));
+      allow delete: if isAdmin();
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -2,9 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Menu, X, Waves, Instagram, Facebook, MessageCircle, MapPin, Clock, Mail, Shield, Heart, Zap, Users, Dumbbell, Leaf } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from './firebase';
-import { FirebaseProvider } from './FirebaseProvider';
+import { AuthProvider } from './AuthProvider';
 
 import { BookingForm } from './components/BookingForm';
 import { BrandName } from './components/BrandName';
@@ -138,23 +136,31 @@ const Navbar = () => {
 const Hero = () => {
   const [content, setContent] = useState<any>({
     heroTitle: "JAH SURF",
-    heroSubtitle: "Donde el mar se encuentra con tu espíritu."
+    heroSubtitle: "Donde el mar se encuentra con tu espíritu.",
+    heroImageUrl: "https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&q=80&w=1920"
   });
 
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, "content", "main"), (doc) => {
-      if (doc.exists()) {
-        setContent(doc.data());
+    const loadContent = async () => {
+      try {
+        const res = await fetch('/api/store/content');
+        if (res.ok) {
+          const data = await res.json();
+          if (data) setContent(data);
+        }
+      } catch (error) {
+        console.warn('Content load failed:', error);
       }
-    });
-    return () => unsub();
+    };
+
+    loadContent();
   }, []);
 
   return (
     <section id="inicio" className="relative h-screen flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
         <img 
-          src="https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&q=80&w=1920" 
+          src={content.heroImageUrl || "https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&q=80&w=1920"}
           alt="Surf background" 
           className="w-full h-full object-cover scale-105"
           referrerPolicy="no-referrer"
@@ -207,6 +213,28 @@ const Hero = () => {
 };
 
 const About = () => {
+  const [content, setContent] = useState<any>({
+    aboutTitle: "Más que una escuela, una filosofía",
+    aboutText: "En JAH SURF Peru, el surf es el puente para reconectar con tu ser interior. Fomentamos el respeto al mar, la salud mental y el crecimiento espiritual en cada ola.",
+    aboutImageUrl: "https://images.unsplash.com/photo-1537519646099-335112f03225?auto=format&fit=crop&q=80&w=1000",
+  });
+
+  useEffect(() => {
+    const loadContent = async () => {
+      try {
+        const res = await fetch('/api/store/content');
+        if (res.ok) {
+          const data = await res.json();
+          if (data) setContent((prev: any) => ({ ...prev, ...data }));
+        }
+      } catch (error) {
+        console.warn('About content load failed:', error);
+      }
+    };
+
+    loadContent();
+  }, []);
+
   const pillars = [
     { icon: <Shield className="w-12 h-12 text-primary" />, title: "Seguridad", desc: "Protocolos internacionales de rescate y supervisión constante." },
     { icon: <Heart className="w-12 h-12 text-secondary" />, title: "Buena Onda", desc: "Comunidad vibrante donde cada sesión es una celebración." },
@@ -228,10 +256,10 @@ const About = () => {
               <span className="text-primary font-black uppercase tracking-[0.2em] text-xs">Nuestra Esencia</span>
             </div>
             <h2 className="text-5xl md:text-7xl font-display font-black text-slate-900 mb-10 leading-[0.9] uppercase tracking-tighter">
-              Más que una escuela, una <span className="text-primary">filosofía</span>
+              {content.aboutTitle || "Más que una escuela, una filosofía"}
             </h2>
             <p className="text-xl text-slate-500 mb-12 leading-relaxed font-medium">
-              En <BrandName /> Peru, el surf es el puente para reconectar con tu ser interior. Fomentamos el respeto al mar, la salud mental y el crecimiento espiritual en cada ola.
+              {content.aboutText}
             </p>
             <div className="grid gap-10">
               {pillars.map((p, i) => (
@@ -257,7 +285,7 @@ const About = () => {
           >
             <div className="relative z-10 aspect-[4/5] rounded-[3rem] overflow-hidden shadow-[0_40px_80px_-15px_rgba(0,0,0,0.2)]">
               <img 
-                src="https://images.unsplash.com/photo-1537519646099-335112f03225?auto=format&fit=crop&q=80&w=1000" 
+                src={content.aboutImageUrl || "https://images.unsplash.com/photo-1537519646099-335112f03225?auto=format&fit=crop&q=80&w=1000"}
                 alt="Surf lesson" 
                 className="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
                 referrerPolicy="no-referrer"
@@ -283,13 +311,30 @@ const About = () => {
 };
 
 const Gallery = () => {
-  // Las imágenes han sido extraídas y hardcodeadas para evitar consumo de API.
-  const photos = [
+  const [photos, setPhotos] = useState<{ src: string; alt: string }[]>([
     { src: "https://aistudio.google.com/_/upload/543bf123-3fb9-4789-be81-98cc9daf6bb3/attachment/1774017559.433184000/blobstore/prod/makersuite/spanner_managed/global::000054e2ea70026d:0000015f:2:000054e2ea70026d:0000000000000001::3c6976c9d7415070:000001f316d018bc:00064d75a670731f", alt: "Surf en San Bartolo" },
     { src: "https://aistudio.google.com/_/upload/543bf123-3fb9-4789-be81-98cc9daf6bb3/attachment/1774017559.433184000/blobstore/prod/makersuite/spanner_managed/global::000054e2ea70026d:0000015f:2:000054e2ea70026d:0000000000000001::dea9602fca005901:000001f316d018bc:00064d75a670731f", alt: "Clase de surf" },
     { src: "https://aistudio.google.com/_/upload/543bf123-3fb9-4789-be81-98cc9daf6bb3/attachment/1774017559.433184000/blobstore/prod/makersuite/spanner_managed/global::000054e2ea70026d:0000015f:2:000054e2ea70026d:0000000000000001::f8e5438df1c36153:000001f316d018bc:00064d75a670731f", alt: "Olas en San Bartolo" },
     { src: "https://aistudio.google.com/_/upload/543bf123-3fb9-4789-be81-98cc9daf6bb3/attachment/1774017559.433184000/blobstore/prod/makersuite/spanner_managed/global::000054e2ea70026d:0000015f:2:000054e2ea70026d:0000000000000001::1b25ad2be08669a2:000001f316d018bc:00064d75a670731f", alt: "Aprendiendo a surfear" },
-  ];
+  ]);
+
+  useEffect(() => {
+    const loadGallery = async () => {
+      try {
+        const res = await fetch('/api/store/content');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data?.galleryImages) && data.galleryImages.length > 0) {
+            setPhotos(data.galleryImages);
+          }
+        }
+      } catch (error) {
+        console.warn('Gallery content load failed:', error);
+      }
+    };
+
+    loadGallery();
+  }, []);
 
   return (
     <section id="experiencia" className="py-32 bg-slate-50">
@@ -836,7 +881,7 @@ const Booking = () => {
 export default function App() {
   return (
     <ErrorBoundary>
-      <FirebaseProvider>
+      <AuthProvider>
         <Router>
           <Routes>
             <Route path="/admin" element={<AdminPanel />} />
@@ -858,7 +903,7 @@ export default function App() {
             } />
           </Routes>
         </Router>
-      </FirebaseProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

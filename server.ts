@@ -25,11 +25,12 @@ interface StoredUser extends AuthUser {
 // Ensure environment variables
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-change-in-production';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@jahsurfperu.com';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Admin123!';
 const JWT_EXPIRY = '7d';
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT || 3001);
 
   app.use(express.json());
 
@@ -74,6 +75,29 @@ async function startServer() {
     const usersPath = getUsersPath();
     fs.writeFileSync(usersPath, JSON.stringify(users, null, 2));
   }
+
+  // Bootstrap default admin user
+  function ensureDefaultAdminUser(): void {
+    const users = loadUsers();
+    const adminExists = users.some(u => u.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+
+    if (!adminExists) {
+      users.push({
+        id: crypto.randomUUID(),
+        email: ADMIN_EMAIL,
+        password: hashPassword(ADMIN_PASSWORD),
+        role: 'admin',
+        createdAt: new Date().toISOString(),
+      });
+      saveUsers(users);
+      console.log(`[AUTH] Admin local creado: ${ADMIN_EMAIL}`);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`[AUTH] Password admin local: ${ADMIN_PASSWORD}`);
+      }
+    }
+  }
+
+  ensureDefaultAdminUser();
 
   // Middleware: Verify JWT
   function verifyJWT(token: string): AuthUser | null {
@@ -187,11 +211,6 @@ async function startServer() {
     res.json({ success: true });
   });
 
-  app.post('/api/auth/logout', (req, res) => {
-    // Logout is client-side (token removal)
-    res.json({ success: true });
-  });
-
   // API Route to store data (protected)
   app.post("/api/store", (req, res) => {
     const user = (req as any).user;
@@ -199,18 +218,34 @@ async function startServer() {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    const { key, data } = req.body;
-    if (!key || !data) {
+    const { key, data, append = false } = req.body;
+    if (!key || data === undefined) {
       return res.status(400).json({ error: "Key and data are required" });
     }
 
     const filePath = path.join(STORE_PATH, `${key}.json`);
     try {
+      if (append) {
+        let existingData: any = [];
+        if (fs.existsSync(filePath)) {
+          const raw = fs.readFileSync(filePath, "utf-8");
+          existingData = raw ? JSON.parse(raw) : [];
+        }
+
+        if (!Array.isArray(existingData)) {
+          return res.status(400).json({ error: "Existing data is not appendable" });
+        }
+
+        existingData.push(data);
+        fs.writeFileSync(filePath, JSON.stringify(existingData, null, 2));
+        return res.json({ success: true, message: `Appended data to ${key}.json`, data: existingData });
+      }
+
       fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-      res.json({ success: true, message: `Data stored at ${filePath}` });
+      return res.json({ success: true, message: `Data stored at ${key}.json` });
     } catch (err) {
       console.error(`Error writing to ${filePath}:`, err);
-      res.status(500).json({ error: "Failed to store data locally" });
+      return res.status(500).json({ error: "Failed to store data locally" });
     }
   });
 
@@ -250,7 +285,12 @@ async function startServer() {
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: {
+          port: Number(process.env.HMR_PORT || 24679),
+        },
+      },
       appType: "spa",
     });
     app.use(vite.middlewares);
