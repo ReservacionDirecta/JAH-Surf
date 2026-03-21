@@ -73,6 +73,23 @@
   @apply bg-white/80 backdrop-blur-xl border border-white/30 shadow-2xl;
 }
 
+.brand-liquid {
+  position: relative;
+  background: linear-gradient(135deg, rgb(15 23 42 / 0.72), rgb(30 41 59 / 0.62));
+  border: 1px solid rgb(255 255 255 / 0.2);
+  box-shadow: 0 10px 24px -14px rgb(15 23 42 / 0.65), inset 0 1px 0 rgb(255 255 255 / 0.22);
+  backdrop-filter: blur(12px) saturate(1.1);
+}
+
+.brand-liquid::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(160deg, rgb(255 255 255 / 0.18), transparent 46%);
+}
+
 .theme-handmade {
   --paper-dot-opacity: 0.03;
   --sand-dot-opacity: 0.028;

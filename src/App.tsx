@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Menu, X, Waves, Instagram, Facebook, MessageCircle, MapPin, Clock, Mail, Shield, Heart, Zap, Users, Dumbbell, Leaf } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
@@ -12,6 +12,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 // --- Components ---
 
 const Navbar = () => {
+  const prefersReducedMotion = useReducedMotion();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('inicio');
@@ -38,40 +39,34 @@ const Navbar = () => {
   }, [isMobileMenuOpen]);
 
   useEffect(() => {
-    if (!isMobileMenuOpen) return;
-
-    const scrollY = window.scrollY;
+    const html = document.documentElement;
     const body = document.body;
-    const previous = {
-      overflow: body.style.overflow,
-      position: body.style.position,
-      top: body.style.top,
-      left: body.style.left,
-      right: body.style.right,
-      width: body.style.width,
-      touchAction: body.style.touchAction,
-    };
+    const previousHtmlOverflow = html.style.overflow;
+    const previousBodyOverflow = body.style.overflow;
 
-    setIsScrolled(true);
-    body.style.overflow = 'hidden';
-    body.style.position = 'fixed';
-    body.style.top = `-${scrollY}px`;
-    body.style.left = '0';
-    body.style.right = '0';
-    body.style.width = '100%';
-    body.style.touchAction = 'none';
+    if (isMobileMenuOpen) {
+      setIsScrolled(true);
+      html.style.overflow = 'hidden';
+      body.style.overflow = 'hidden';
+    }
 
     return () => {
-      body.style.overflow = previous.overflow;
-      body.style.position = previous.position;
-      body.style.top = previous.top;
-      body.style.left = previous.left;
-      body.style.right = previous.right;
-      body.style.width = previous.width;
-      body.style.touchAction = previous.touchAction;
-      window.scrollTo(0, scrollY);
+      html.style.overflow = previousHtmlOverflow;
+      body.style.overflow = previousBodyOverflow;
     };
   }, [isMobileMenuOpen]);
+
+  const handleMobileNavigate = (href: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    setIsMobileMenuOpen(false);
+
+    const target = document.querySelector(href);
+    if (target) {
+      requestAnimationFrame(() => {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  };
 
   const navLinks = [
     { name: 'Inicio', href: '#inicio', id: 'inicio' },
@@ -83,92 +78,125 @@ const Navbar = () => {
     { name: 'Contacto', href: '#contacto', id: 'contacto' },
   ];
 
+  const menuListMotion = prefersReducedMotion
+    ? {
+        initial: { opacity: 1 },
+        animate: { opacity: 1 },
+        exit: { opacity: 1 },
+      }
+    : {
+        initial: { opacity: 0, y: 20 },
+        animate: { opacity: 1, y: 0 },
+        exit: { opacity: 0, y: 12 },
+      };
+
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled || isMobileMenuOpen ? 'glass py-3 shadow-xl shadow-slate-900/5' : 'bg-transparent py-5 md:py-8'}`}>
-      <div className="container mx-auto px-4 sm:px-6 flex justify-between items-center">
-        <a href="#inicio" className="flex items-center gap-3 group">
-          <div className={`p-2 rounded-xl transition-colors ${isScrolled || isMobileMenuOpen ? 'bg-primary text-white' : 'bg-white/10 text-white'}`}>
-            <Waves className="w-6 h-6" />
-          </div>
-          <BrandName 
-            className={`text-2xl ${isScrolled || isMobileMenuOpen ? 'text-slate-900' : 'text-white'}`} 
-            surfColor={isScrolled || isMobileMenuOpen ? 'text-green-600' : 'text-white'} 
-          />
-        </a>
-
-        {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-7 lg:gap-10">
-          {navLinks.map((link) => (
-            <a
-              key={link.name}
-              href={link.href}
-              className={`text-xs font-black uppercase tracking-[0.16em] transition-all hover:text-secondary relative group ${
-                activeSection === link.id 
-                  ? 'text-secondary' 
-                  : isScrolled ? 'text-slate-700' : 'text-white/85'
-              }`}
-            >
-              {link.name}
-              <span className={`absolute -bottom-2 left-0 w-full h-0.5 bg-secondary transition-transform duration-300 origin-left ${activeSection === link.id ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
-            </a>
-          ))}
-          <a 
-            href="https://wa.me/51952641118" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="bg-primary hover:bg-primary/90 text-white px-7 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/20"
-          >
-            RESERVAR
+    <>
+      <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled || isMobileMenuOpen ? 'glass py-3 shadow-xl shadow-slate-900/5' : 'bg-transparent py-5 md:py-8'}`}>
+        <div className="container mx-auto px-4 sm:px-6 flex justify-between items-center">
+          <a href="#inicio" className="brand-liquid group inline-flex items-center rounded-2xl px-3.5 py-2.5 transition-all duration-300 hover:scale-[1.02]">
+            <BrandName 
+              className="text-xl sm:text-2xl text-white" 
+              surfColor="text-white" 
+            />
           </a>
-        </div>
 
-        {/* Mobile Toggle */}
-        <button 
-          aria-label={isMobileMenuOpen ? 'Cerrar menu' : 'Abrir menu'}
-          className={`md:hidden p-3 rounded-2xl transition-colors ${isScrolled || isMobileMenuOpen ? 'bg-slate-100 text-slate-900' : 'bg-white/10 text-white'}`}
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, x: '100%' }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed inset-0 glass-dark z-[60] flex flex-col items-center justify-center gap-8 md:hidden px-6"
-          >
-            <button 
-              aria-label="Cerrar menu"
-              className="absolute top-6 right-6 p-4 text-white/70 hover:text-white transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <X size={40} />
-            </button>
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center gap-7 lg:gap-10">
             {navLinks.map((link) => (
               <a
                 key={link.name}
                 href={link.href}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-3xl sm:text-4xl font-display font-black text-white uppercase tracking-tighter hover:text-primary transition-colors"
+                className={`text-xs font-black uppercase tracking-[0.16em] transition-all hover:text-secondary relative group ${
+                  activeSection === link.id 
+                    ? 'text-secondary' 
+                    : isScrolled ? 'text-slate-800' : 'text-white/85'
+                }`}
               >
                 {link.name}
+                <span className={`absolute -bottom-2 left-0 w-full h-0.5 bg-secondary transition-transform duration-300 origin-left ${activeSection === link.id ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
               </a>
             ))}
             <a 
               href="https://wa.me/51952641118" 
-              className="bg-primary text-white px-10 py-4 rounded-[2rem] text-lg font-black uppercase tracking-widest mt-4 shadow-2xl shadow-primary/40"
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="bg-primary hover:bg-primary/90 text-white px-7 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/20"
             >
-              RESERVAR AHORA
+              RESERVAR
             </a>
+          </div>
+
+          {/* Mobile Toggle */}
+          <button 
+            aria-label={isMobileMenuOpen ? 'Cerrar menu' : 'Abrir menu'}
+            className={`md:hidden p-3 rounded-2xl transition-colors ${isScrolled || isMobileMenuOpen ? 'bg-slate-100 text-slate-900' : 'bg-white/10 text-white'}`}
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+      </nav>
+
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            key="mobile-menu"
+            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: 'easeOut' }}
+            className="fixed inset-0 z-[9999] md:hidden overflow-y-auto bg-slate-950"
+          >
+            <motion.button 
+              aria-label="Cerrar menu"
+              className="fixed top-4 right-4 p-3 text-white/90 hover:text-white transition-colors bg-white/10 rounded-xl border border-white/20 z-[10001]"
+              onClick={() => setIsMobileMenuOpen(false)}
+              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, scale: 0.95 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.18 }}
+            >
+              <X size={30} />
+            </motion.button>
+            <motion.div
+              className="relative z-[10000] w-full flex flex-col items-stretch gap-3 px-6 pt-24 pb-10"
+              initial={menuListMotion.initial}
+              animate={menuListMotion.animate}
+              exit={menuListMotion.exit}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.24, ease: 'easeOut' }}
+            >
+              <p className="text-white/60 text-[11px] font-black uppercase tracking-[0.2em] mb-3">Menú</p>
+              {navLinks.map((link, index) => (
+                <motion.a
+                  key={link.name}
+                  href={link.href}
+                  onClick={handleMobileNavigate(link.href)}
+                  className="block w-full text-left text-2xl sm:text-3xl font-display font-black text-white uppercase tracking-tight hover:text-primary transition-colors py-3 border-b border-white/10"
+                  initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, x: -8 }}
+                  transition={{ duration: prefersReducedMotion ? 0 : 0.2, delay: prefersReducedMotion ? 0 : index * 0.03 }}
+                >
+                  {link.name}
+                </motion.a>
+              ))}
+              <motion.a 
+                href="https://wa.me/51952641118"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="bg-primary text-white px-8 py-4 rounded-[2rem] text-base sm:text-lg font-black uppercase tracking-widest mt-5 shadow-2xl shadow-primary/40 text-center"
+                initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.22, delay: prefersReducedMotion ? 0 : 0.12 }}
+              >
+                RESERVAR AHORA
+              </motion.a>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </nav>
+    </>
   );
 };
 
@@ -208,7 +236,7 @@ const Hero = () => {
           decoding="async"
           referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/40 to-white"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/85 via-slate-950/45 to-slate-950/12 md:to-white"></div>
       </div>
       
       <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
@@ -636,10 +664,10 @@ const Pricing = () => {
       color: "primary",
       desc: "Aprende con amigos o conoce gente nueva en un ambiente dinámico.",
       packages: [
-        { name: "1 Clase x Semana", desc: "4 clases al mes", price: "S/ 384", perClass: "S/ 96" },
-        { name: "2 Clases x Semana", desc: "8 clases al mes", price: "S/ 696", perClass: "S/ 87" },
-        { name: "3 Clases x Semana", desc: "12 clases al mes", price: "S/ 984", perClass: "S/ 82" },
-        { name: "Clase Suelta", desc: "Sesión única de prueba", price: "S/ 108", perClass: "S/ 108" },
+        { name: "1 Clase x Semana", desc: "4 clases al mes", price: "S/ 461", perClass: "S/ 115" },
+        { name: "2 Clases x Semana", desc: "8 clases al mes", price: "S/ 835", perClass: "S/ 104" },
+        { name: "3 Clases x Semana", desc: "12 clases al mes", price: "S/ 1181", perClass: "S/ 98" },
+        { name: "Clase Suelta", desc: "Sesión única de prueba", price: "S/ 130", perClass: "S/ 130" },
       ]
     },
     {
@@ -649,10 +677,10 @@ const Pricing = () => {
       color: "secondary",
       desc: "Atención 100% personalizada para perfeccionar tu técnica rápidamente.",
       packages: [
-        { name: "1 Clase x Semana", desc: "4 clases al mes", price: "S/ 576", perClass: "S/ 144" },
-        { name: "2 Clases x Semana", desc: "8 clases al mes", price: "S/ 1056", perClass: "S/ 132" },
-        { name: "3 Clases x Semana", desc: "12 clases al mes", price: "S/ 1440", perClass: "S/ 120" },
-        { name: "Clase Suelta", desc: "Sesión única intensiva", price: "S/ 156", perClass: "S/ 156" },
+        { name: "1 Clase x Semana", desc: "4 clases al mes", price: "S/ 691", perClass: "S/ 173" },
+        { name: "2 Clases x Semana", desc: "8 clases al mes", price: "S/ 1267", perClass: "S/ 158" },
+        { name: "3 Clases x Semana", desc: "12 clases al mes", price: "S/ 1728", perClass: "S/ 144" },
+        { name: "Clase Suelta", desc: "Sesión única intensiva", price: "S/ 187", perClass: "S/ 187" },
       ]
     },
     {
@@ -662,10 +690,10 @@ const Pricing = () => {
       color: "accent",
       desc: "Experiencias grupales, viajes y eventos diseñados para la comunidad.",
       packages: [
-        { name: "Paseos de Surf", desc: "Día completo en otras playas", price: "Desde S/ 240" },
+        { name: "Paseos de Surf", desc: "Día completo en otras playas", price: "Desde S/ 288" },
         { name: "Surf Camps", desc: "Fin de semana inmersivo", price: "Consultar" },
         { name: "Eventos Corporativos", desc: "Team building en el mar", price: "Consultar" },
-        { name: "Alquiler de Equipo", desc: "Tabla + Wetsuit (2h)", price: "S/ 60" },
+        { name: "Alquiler de Equipo", desc: "Tabla + Wetsuit (2h)", price: "S/ 72" },
       ]
     }
   ];

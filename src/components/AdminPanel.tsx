@@ -50,9 +50,9 @@ const defaultContent = {
 };
 
 const defaultPricing = [
-  { id: "grupales", name: "Clases Grupales", price: 80, description: "Por persona" },
-  { id: "individuales", name: "Clases Individuales", price: 150, description: "Por clase" },
-  { id: "otras", name: "Eventos especiales", price: 350, description: "Por grupo" },
+  { id: "grupales", name: "Clases Grupales", price: 96, description: "Por persona" },
+  { id: "individuales", name: "Clases Individuales", price: 180, description: "Por clase" },
+  { id: "otras", name: "Eventos especiales", price: 420, description: "Por grupo" },
 ];
 
 const defaultSettings = {
