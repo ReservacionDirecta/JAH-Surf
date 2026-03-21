@@ -22,7 +22,7 @@ const Navbar = () => {
       if (isMobileMenuOpen) return;
       setIsScrolled(window.scrollY > 50);
       
-      const sections = ['inicio', 'nosotros', 'experiencia', 'equipos', 'clases', 'beneficios', 'contacto'];
+      const sections = ['inicio', 'nosotros', 'experiencia', 'galeria', 'equipos', 'clases', 'beneficios', 'contacto'];
       const current = sections.find(section => {
         const element = document.getElementById(section);
         if (element) {
@@ -72,6 +72,7 @@ const Navbar = () => {
     { name: 'Inicio', href: '#inicio', id: 'inicio' },
     { name: 'Nosotros', href: '#nosotros', id: 'nosotros' },
     { name: 'Experiencia', href: '#experiencia', id: 'experiencia' },
+    { name: 'Galeria', href: '#galeria', id: 'galeria' },
     { name: 'Equipos', href: '#equipos', id: 'equipos' },
     { name: 'Clases', href: '#clases', id: 'clases' },
     { name: 'Beneficios', href: '#beneficios', id: 'beneficios' },
@@ -97,7 +98,6 @@ const Navbar = () => {
           <a href="#inicio" className="brand-liquid group inline-flex items-center rounded-2xl px-3.5 py-2.5 transition-all duration-300 hover:scale-[1.02]">
             <BrandName 
               className="text-xl sm:text-2xl text-white" 
-              surfColor="text-white" 
             />
           </a>
 
@@ -249,7 +249,17 @@ const Hero = () => {
             San Bartolo, Perú
           </span>
           <h1 className="text-4xl sm:text-6xl md:text-8xl lg:text-[10rem] font-display font-black text-white mb-6 sm:mb-8 leading-[0.86] uppercase tracking-tighter">
-            {content.heroTitle || "JAH SURF"}.
+            {(content.heroTitle || "JAH SURF").trim().toUpperCase() === "JAH SURF" ? (
+              <>
+                <span className="text-red-500">J</span>
+                <span className="text-amber-300">A</span>
+                <span className="text-emerald-400">H</span>
+                <span className="text-sky-300"> SURF</span>
+                <span className="text-sky-300">.</span>
+              </>
+            ) : (
+              <>{content.heroTitle || "JAH SURF"}.</>
+            )}
           </h1>
           <div className="flex justify-center gap-2 mb-8">
             <div className="w-8 h-1 bg-primary rounded-full"></div>
@@ -364,7 +374,7 @@ const About = () => {
                 referrerPolicy="no-referrer"
               />
             </div>
-            <div className="absolute -bottom-12 -left-12 glass p-10 rounded-[2.5rem] shadow-2xl hidden xl:block max-w-sm z-20 border-2 border-white/30">
+            <div className="absolute -bottom-12 -left-12 glass p-10 rounded-[2.5rem] shadow-xl hidden xl:block max-w-sm z-20 border-2 border-white/30">
               <p className="text-xl italic text-slate-900 font-display leading-relaxed">
                 "El mar es el mejor maestro de paciencia y humildad que existe."
               </p>
@@ -375,7 +385,7 @@ const About = () => {
                 <p className="font-black text-primary uppercase tracking-widest text-sm"><BrandName /> Team</p>
               </div>
             </div>
-            <div className="absolute -top-10 -right-10 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-10"></div>
+            <div className="absolute -top-10 -right-10 w-56 h-56 bg-[radial-gradient(circle,rgba(16,185,129,0.12),transparent_68%)] -z-10"></div>
           </motion.div>
         </div>
       </div>
@@ -384,12 +394,37 @@ const About = () => {
 };
 
 const Gallery = () => {
-  const [photos, setPhotos] = useState<{ src: string; alt: string }[]>([
-    { src: "", alt: "Surf en San Bartolo" },
-    { src: "", alt: "Clase de surf" },
-    { src: "", alt: "Olas en San Bartolo" },
-    { src: "", alt: "Aprendiendo a surfear" },
-  ]);
+  const [experiencePhotos, setExperiencePhotos] = useState<{ src: string; alt: string }[]>([]);
+  const [galleryPhotos, setGalleryPhotos] = useState<{ src: string; alt: string }[]>([]);
+  const [videos, setVideos] = useState<{ id: string; url: string; title?: string }[]>([]);
+
+  const toEmbedUrl = (rawUrl: string) => {
+    if (!rawUrl) return '';
+
+    const safeUrl = rawUrl.trim();
+
+    const ytWatch = safeUrl.match(/(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{6,})/i);
+    if (ytWatch) {
+      return `https://www.youtube.com/embed/${ytWatch[1]}?autoplay=1&mute=1&loop=1&playlist=${ytWatch[1]}&controls=0&modestbranding=1&rel=0&playsinline=1`;
+    }
+
+    const ytShort = safeUrl.match(/(?:youtu\.be\/)([a-zA-Z0-9_-]{6,})/i);
+    if (ytShort) {
+      return `https://www.youtube.com/embed/${ytShort[1]}?autoplay=1&mute=1&loop=1&playlist=${ytShort[1]}&controls=0&modestbranding=1&rel=0&playsinline=1`;
+    }
+
+    const ytEmbed = safeUrl.match(/(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{6,})/i);
+    if (ytEmbed) {
+      return `https://www.youtube.com/embed/${ytEmbed[1]}?autoplay=1&mute=1&loop=1&playlist=${ytEmbed[1]}&controls=0&modestbranding=1&rel=0&playsinline=1`;
+    }
+
+    const vimeo = safeUrl.match(/vimeo\.com\/(\d{6,})/i);
+    if (vimeo) {
+      return `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1&muted=1&loop=1&autopause=0&background=1`;
+    }
+
+    return safeUrl;
+  };
 
   useEffect(() => {
     const loadGallery = async () => {
@@ -397,9 +432,9 @@ const Gallery = () => {
         const res = await fetch('/api/store/content');
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data?.experienceImages) && data.experienceImages.length > 0) {
-            setPhotos(data.experienceImages);
-          }
+          if (Array.isArray(data?.experienceImages)) setExperiencePhotos(data.experienceImages);
+          if (Array.isArray(data?.galleryImages)) setGalleryPhotos(data.galleryImages);
+          if (Array.isArray(data?.videoLinks)) setVideos(data.videoLinks);
         }
       } catch (error) {
         console.warn('Gallery content load failed:', error);
@@ -410,13 +445,14 @@ const Gallery = () => {
   }, []);
 
   return (
+    <>
     <section id="experiencia" className="py-20 md:py-32 section-sand section-divider">
       <div className="container mx-auto px-4 sm:px-6">
         <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-black text-slate-900 uppercase tracking-tighter mb-10 md:mb-16 text-center">
           Nuestra <span className="text-primary">Experiencia</span>
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
-          {photos.filter(p => p.src).map((photo, i) => (
+          {experiencePhotos.filter(p => p.src).map((photo, i) => (
             <motion.div 
               key={i}
               whileHover={{ scale: 1.05 }}
@@ -428,6 +464,46 @@ const Gallery = () => {
         </div>
       </div>
     </section>
+
+    <section id="galeria" className="py-20 md:py-28 section-paper section-divider">
+      <div className="container mx-auto px-4 sm:px-6">
+        <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-black text-slate-900 uppercase tracking-tighter mb-10 md:mb-14 text-center">
+          Galeria <span className="text-primary">Multimedia</span>
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 mb-12">
+          {galleryPhotos.filter((p) => p.src).map((photo, i) => (
+            <motion.div
+              key={`gallery-${i}`}
+              whileHover={{ scale: 1.03 }}
+              className="rounded-3xl overflow-hidden shadow-lg bg-white"
+            >
+              <img src={photo.src} alt={photo.alt || 'Galeria'} className="w-full h-64 object-cover" loading="lazy" decoding="async" referrerPolicy="no-referrer" />
+            </motion.div>
+          ))}
+        </div>
+
+        <div>
+          <h3 className="text-2xl sm:text-3xl font-display font-black text-slate-900 uppercase tracking-tight mb-6 text-center">Videos</h3>
+          <p className="text-slate-500 text-center mb-8">Reproduccion automatica en silencio. Grilla 3x2 adaptable.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+            {videos.filter((v) => v.url).map((video, i) => (
+              <div key={video.id || `video-${i}`} className="rounded-3xl overflow-hidden shadow-lg bg-slate-900 aspect-video">
+                <iframe
+                  src={toEmbedUrl(video.url)}
+                  title={video.title || `Video ${i + 1}`}
+                  className="w-full h-full"
+                  loading="lazy"
+                  allow="autoplay; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+    </>
   );
 };
 
@@ -471,8 +547,8 @@ const Equipment = () => {
             </div>
           </div>
 
-          <div className="lg:col-span-5 glass-dark text-white p-8 sm:p-10 md:p-16 rounded-[2rem] md:rounded-[3rem] shadow-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/30 transition-colors duration-500"></div>
+          <div className="lg:col-span-5 glass-dark text-white p-8 sm:p-10 md:p-16 rounded-[2rem] md:rounded-[3rem] shadow-xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[radial-gradient(circle,rgba(16,185,129,0.18),transparent_70%)] -translate-y-1/2 translate-x-1/2 opacity-90 transition-opacity duration-300 group-hover:opacity-100"></div>
             <div className="relative z-10">
               <h3 className="text-3xl font-black mb-10 flex items-center gap-4 uppercase tracking-tight">
                 <div className="bg-white/10 p-3 rounded-2xl"><Clock className="text-secondary" /></div>
@@ -507,150 +583,219 @@ const Equipment = () => {
 };
 
 const PricingModal = ({ isOpen, onClose, title, packages, color }) => {
-  if (!isOpen) return null;
-
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('9hs a 11hs');
   const [whatsapp, setWhatsapp] = useState('');
+  const prefersReducedMotion = useReducedMotion();
   const timeOptions = ['9hs a 11hs', '12hs a 2pm', '3pm a 5pm'];
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const html = document.documentElement;
+    const body = document.body;
+    const previousHtmlOverflow = html.style.overflow;
+    const previousBodyOverflow = body.style.overflow;
+
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+
+    return () => {
+      html.style.overflow = previousHtmlOverflow;
+      body.style.overflow = previousBodyOverflow;
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
 
   const colorClasses = {
     primary: {
       border: 'hover:border-primary/30',
-      shadow: 'hover:shadow-primary/5',
-      text: 'group-hover:text-primary',
       badge: 'text-primary bg-primary/10',
       button: 'bg-primary hover:bg-primary/90 shadow-primary/20'
     },
     secondary: {
       border: 'hover:border-secondary/30',
-      shadow: 'hover:shadow-secondary/5',
-      text: 'group-hover:text-secondary',
       badge: 'text-secondary bg-secondary/10',
       button: 'bg-secondary hover:bg-secondary/90 shadow-secondary/20'
     },
     accent: {
       border: 'hover:border-accent/30',
-      shadow: 'hover:shadow-accent/5',
-      text: 'group-hover:text-amber-700',
       badge: 'text-amber-900 bg-amber-200',
       button: 'bg-amber-600 hover:bg-amber-700 shadow-amber-200'
     }
   }[color || 'primary'];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
-      <motion.div 
+    <div className="fixed inset-0 z-[100] overflow-y-auto">
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="absolute inset-0 bg-slate-950/95 backdrop-blur-md"
+        className="absolute inset-0 bg-slate-950/88"
       />
-      <motion.div 
-        initial={{ scale: 0.95, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="relative glass-modal w-full max-w-2xl rounded-[2rem] overflow-hidden"
-      >
-        <div className="p-8 md:p-10 border-b border-white/20 flex justify-between items-center bg-white/30">
-          <div>
-            <h3 className="text-3xl font-display font-black text-slate-900 uppercase tracking-tighter">{title}</h3>
-            <p className="text-slate-500 text-sm font-medium mt-1 uppercase tracking-widest">Planes Mensuales</p>
-          </div>
-          <button onClick={onClose} className="p-3 hover:bg-slate-200 rounded-full transition-all active:scale-90">
-            <X className="w-6 h-6 text-slate-900" />
-          </button>
-        </div>
-        <div className="p-8 md:p-10 max-h-[60vh] overflow-y-auto custom-scrollbar">
-          <div className="grid gap-6">
-            <div className="space-y-4">
-              <input type="text" placeholder="Nombre" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-4" />
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-4" />
-              <select value={time} onChange={(e) => setTime(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-4">
-                {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-              <input type="tel" placeholder="WhatsApp" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-4" />
+
+      <div className="relative min-h-full flex items-start md:items-center justify-center p-4 md:p-6">
+        <motion.div
+          initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
+          transition={{ duration: prefersReducedMotion ? 0.12 : 0.2, ease: 'easeOut' }}
+          className="relative w-full max-w-5xl rounded-[2rem] overflow-hidden border border-white/60 bg-white shadow-[0_24px_80px_-28px_rgba(15,23,42,0.42)]"
+        >
+          <div className="p-6 md:p-8 border-b border-slate-200 flex justify-between items-center bg-slate-50/95">
+            <div>
+              <h3 className="text-2xl md:text-3xl font-display font-black text-slate-900 uppercase tracking-tighter">{title}</h3>
+              <p className="text-slate-500 text-xs md:text-sm font-medium mt-1 uppercase tracking-widest">Planes mensuales</p>
             </div>
-            
-            <div className="grid gap-6">
-              {packages.map((pkg, i) => (
-                <div key={i} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-8 rounded-3xl bg-white/50 border-2 border-white/20 ${colorClasses.border} ${colorClasses.shadow} transition-all duration-300 group`}>
-                  <div className="mb-4 sm:mb-0">
-                    <h4 className={`font-bold text-xl text-slate-900 ${colorClasses.text} transition-colors`}>{pkg.name}</h4>
-                    <p className="text-slate-500 font-medium">{pkg.desc}</p>
-                  </div>
-                  <div className="text-left sm:text-right w-full sm:w-auto pt-4 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                    <div className="flex flex-col">
-                      <span className="text-3xl font-black text-slate-900 leading-none">{pkg.price}</span>
-                      {pkg.perClass && (
-                        <span className={`font-bold text-sm mt-1 ${colorClasses.badge} px-3 py-1 rounded-full inline-block w-fit sm:ml-auto`}>
-                          {pkg.perClass} <span className="text-[10px] opacity-70 uppercase">por clase</span>
-                        </span>
-                      )}
+            <button onClick={onClose} className="p-3 hover:bg-slate-200 rounded-full transition-colors" aria-label="Cerrar modal">
+              <X className="w-6 h-6 text-slate-900" />
+            </button>
+          </div>
+
+          <div className="grid lg:grid-cols-[1.25fr_0.85fr] gap-0">
+            <div className="p-6 md:p-8 border-b lg:border-b-0 lg:border-r border-slate-200">
+              <div className="grid gap-4">
+                {packages.map((pkg, i) => (
+                  <div key={i} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 md:p-6 rounded-3xl bg-slate-50 border border-slate-200 ${colorClasses.border} transition-colors duration-200`}>
+                    <div className="mb-4 sm:mb-0">
+                      <h4 className="font-bold text-lg md:text-xl text-slate-900">{pkg.name}</h4>
+                      <p className="text-slate-500 font-medium">{pkg.desc}</p>
+                    </div>
+                    <div className="text-left sm:text-right w-full sm:w-auto pt-4 sm:pt-0 border-t sm:border-t-0 border-slate-200">
+                      <div className="flex flex-col">
+                        <span className="text-2xl md:text-3xl font-black text-slate-900 leading-none">{pkg.price}</span>
+                        {pkg.perClass && (
+                          <span className={`font-bold text-sm mt-2 ${colorClasses.badge} px-3 py-1 rounded-full inline-block w-fit sm:ml-auto`}>
+                            {pkg.perClass} <span className="text-[10px] opacity-70 uppercase">por clase</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        </div>
-        <div className="p-8 md:p-10 bg-white/40 border-t border-white/20">
-          <button 
-            onClick={async () => {
-              if (!name || !date || !whatsapp) {
-                alert('Por favor, completa nombre, fecha y WhatsApp.');
-                return;
-              }
 
-              const bookingData = {
-                activity: title,
-                name,
-                date,
-                time,
-                whatsapp,
-                timestamp: new Date().toISOString()
-              };
+            <div className="p-6 md:p-8 bg-slate-50/60">
+              <div className="space-y-4 md:sticky md:top-6">
+                <input type="text" placeholder="Nombre" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-5 py-4" />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={10}
+                  value={date}
+                  onChange={(e) => setDate(formatLatinDateInput(e.target.value))}
+                  className="w-full bg-white border-2 border-slate-100 rounded-2xl px-5 py-4"
+                  placeholder="dd/mm/aaaa"
+                />
+                <select value={time} onChange={(e) => setTime(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-5 py-4">
+                  {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <input type="tel" placeholder="WhatsApp" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-5 py-4" />
 
-              // Fallback: Save to local storage on server (/store)
-              try {
-                const bookingKey = `booking_modal_${Date.now()}`;
-                await fetch('/api/store', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    key: bookingKey,
-                    data: bookingData
-                  }),
-                });
-                console.log('Reserva guardada en el servidor (/store)');
-              } catch (error) {
-                console.error('Error al guardar en el servidor:', error);
-              }
+                <button
+                  onClick={async () => {
+                    const parsedDate = parseLatinDate(date);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
 
-              const message = `Hola JAH SURF Peru, quiero reservar:
+                    if (!name || !date || !whatsapp) {
+                      alert('Por favor, completa nombre, fecha y WhatsApp.');
+                      return;
+                    }
+
+                    if (!parsedDate) {
+                      alert('Ingresa la fecha con formato dd/mm/aaaa.');
+                      return;
+                    }
+
+                    if (parsedDate < today) {
+                      alert('La fecha de reserva no puede ser anterior a hoy.');
+                      return;
+                    }
+
+                    const bookingData = {
+                      activity: title,
+                      name,
+                      date,
+                      time,
+                      whatsapp,
+                      timestamp: new Date().toISOString()
+                    };
+
+                    try {
+                      const bookingKey = `booking_modal_${Date.now()}`;
+                      await fetch('/api/store', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          key: bookingKey,
+                          data: bookingData
+                        }),
+                      });
+                    } catch (error) {
+                      console.error('Error al guardar en el servidor:', error);
+                    }
+
+                    const message = `Hola JAH SURF Peru, quiero reservar:
 - Actividad: ${title}
 - Nombre: ${name}
 - Fecha: ${date}
 - Horario: ${time}
 - Mi WhatsApp: ${whatsapp}`;
-              window.open(`https://wa.me/51952641118?text=${encodeURIComponent(message)}`, '_blank');
-            }}
-            className={`flex items-center justify-center gap-3 w-full ${colorClasses.button} text-white text-center py-5 rounded-2xl font-black text-lg transition-all shadow-xl hover:-translate-y-1 active:translate-y-0`}
-          >
-            <MessageCircle className="w-6 h-6" />
-            RESERVAR POR WHATSAPP
-          </button>
-          <p className="text-center text-slate-400 text-xs mt-6 font-bold uppercase tracking-widest">
-            * Sujeto a condiciones climáticas y disponibilidad
-          </p>
-        </div>
-      </motion.div>
+                    window.open(`https://wa.me/51952641118?text=${encodeURIComponent(message)}`, '_blank');
+                  }}
+                  className={`flex items-center justify-center gap-3 w-full ${colorClasses.button} text-white text-center py-5 rounded-2xl font-black text-lg transition-colors shadow-lg`}
+                >
+                  <MessageCircle className="w-6 h-6" />
+                  RESERVAR POR WHATSAPP
+                </button>
+
+                <p className="text-center text-slate-400 text-xs mt-2 font-bold uppercase tracking-widest">
+                  * Sujeto a condiciones climáticas y disponibilidad
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
+};
+
+const formatLatinDateInput = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+};
+
+const parseLatinDate = (value: string) => {
+  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return null;
+
+  const [, dayString, monthString, yearString] = match;
+  const day = Number(dayString);
+  const month = Number(monthString);
+  const year = Number(yearString);
+  const parsedDate = new Date(year, month - 1, day);
+
+  if (
+    parsedDate.getFullYear() !== year ||
+    parsedDate.getMonth() !== month - 1 ||
+    parsedDate.getDate() !== day
+  ) {
+    return null;
+  }
+
+  parsedDate.setHours(0, 0, 0, 0);
+  return parsedDate;
 };
 
 const Pricing = () => {
@@ -732,8 +877,8 @@ const Pricing = () => {
           {pricingCategories.map((cat) => (
             <motion.div 
               key={cat.id}
-              whileHover={{ y: -15 }}
-              className="glass p-8 md:p-12 rounded-[2rem] md:rounded-[3rem] flex flex-col items-center text-center group cursor-pointer transition-all duration-500 hover:shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] hover:bg-white/80"
+              whileHover={{ y: -8 }}
+              className="glass p-8 md:p-12 rounded-[2rem] md:rounded-[3rem] flex flex-col items-center text-center group cursor-pointer transition-all duration-300 hover:shadow-[0_24px_48px_-24px_rgba(0,0,0,0.12)] hover:bg-white/84"
               onClick={() => setModalData(cat)}
             >
               <div className={`bg-white p-8 rounded-[2rem] shadow-sm mb-10 group-hover:scale-110 transition-all duration-500 ${
@@ -809,9 +954,9 @@ const Benefits = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1, duration: 0.6 }}
-              className="glass-dark p-7 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[2.5rem] hover:bg-white/15 transition-all duration-500 group border-white/10"
+              className="glass-dark p-7 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[2.5rem] hover:bg-white/12 transition-all duration-300 group border-white/10"
             >
-              <div className="text-secondary mb-8 group-hover:scale-110 transition-transform duration-500">
+              <div className="text-secondary mb-8 group-hover:scale-105 transition-transform duration-300">
                 {b.icon}
               </div>
               <h4 className="text-2xl font-black mb-4 uppercase tracking-tight">{b.title}</h4>

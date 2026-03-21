@@ -1,0 +1,9 @@
+; Cloudflare DNS import (BIND format) for jahsurfperu.com
+; Note: Proxy status is configured in Cloudflare after import.
+
+$ORIGIN jahsurfperu.com.
+$TTL 300
+
+@ IN CNAME v642zseg.up.railway.app.
+www IN CNAME v642zseg.up.railway.app.
+_railway-verify IN TXT "railway-verify=6c1310021c3743a7ddf2dbccb03a82fb9d1da78665f183ec2be6b78fc57ab8d5"

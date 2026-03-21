@@ -2,6 +2,35 @@
 import { PRICE_TABLES } from '../constants';
 import { Calendar, Users, MessageCircle, Phone } from 'lucide-react';
 
+const formatLatinDateInput = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+};
+
+const parseLatinDate = (value: string) => {
+  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return null;
+
+  const [, dayString, monthString, yearString] = match;
+  const day = Number(dayString);
+  const month = Number(monthString);
+  const year = Number(yearString);
+  const parsedDate = new Date(year, month - 1, day);
+
+  if (
+    parsedDate.getFullYear() !== year ||
+    parsedDate.getMonth() !== month - 1 ||
+    parsedDate.getDate() !== day
+  ) {
+    return null;
+  }
+
+  parsedDate.setHours(0, 0, 0, 0);
+  return parsedDate;
+};
+
 export const BookingForm = () => {
   const [classType, setClassType] = useState<'grupales' | 'individuales' | 'paddle' | 'otras'>('grupales');
   const [selectedPlanIndex, setSelectedPlanIndex] = useState(0);
@@ -13,15 +42,30 @@ export const BookingForm = () => {
   const plans = PRICE_TABLES[classType];
   const selectedPlan = plans[selectedPlanIndex];
   const timeOptions = ['9hs a 11hs', '12hs a 2pm', '3pm a 5pm'];
-  const today = new Date().toISOString().split('T')[0];
+  const EXCHANGE_RATE = 3.6;
 
   const totalPrice = useMemo(() => {
     return selectedPlan.price * numPeople;
   }, [selectedPlan, numPeople]);
+  const totalUsd = useMemo(() => Number((totalPrice / EXCHANGE_RATE).toFixed(2)), [totalPrice]);
 
   const handleConfirm = async () => {
+    const parsedDate = parseLatinDate(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     if (!date || !whatsapp) {
       alert('Por favor, completa la fecha y tu número de WhatsApp.');
+      return;
+    }
+
+    if (!parsedDate) {
+      alert('Ingresa la fecha con formato dd/mm/aaaa.');
+      return;
+    }
+
+    if (parsedDate < today) {
+      alert('La fecha de reserva no puede ser anterior a hoy.');
       return;
     }
 
@@ -53,7 +97,7 @@ export const BookingForm = () => {
       alert('No se pudo guardar la reserva en el servidor local. Intenta más tarde.');
     }
 
-    const message = `Hola JAH SURF Peru, quiero reservar una clase:\n- Tipo: ${classType}\n- Plan: ${selectedPlan.name}\n- Personas: ${numPeople}\n- Fecha: ${date}\n- Horario: ${time}\n- Total a pagar: S/ ${totalPrice}\n- Mi WhatsApp: ${whatsapp}`;
+    const message = `Hola JAH SURF Peru, quiero reservar una clase:\n- Tipo: ${classType}\n- Plan: ${selectedPlan.name}\n- Personas: ${numPeople}\n- Fecha: ${date}\n- Horario: ${time}\n- Total a pagar: S/ ${totalPrice} (US$ ${totalUsd.toFixed(2)} aprox. con TC ${EXCHANGE_RATE})\n- Mi WhatsApp: ${whatsapp}`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/51952641118?text=${encodedMessage}`, '_blank');
@@ -79,16 +123,38 @@ export const BookingForm = () => {
         </div>
 
         <div>
-          <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em] mb-3">Plan</label>
-          <select
-            value={selectedPlanIndex}
-            onChange={(e) => setSelectedPlanIndex(Number(e.target.value))}
-            className="w-full bg-white border-2 border-slate-100 rounded-2xl px-5 sm:px-6 py-4 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium"
-          >
-            {plans.map((plan, i) => (
-              <option key={i} value={i}>{plan.name} - S/ {plan.price}</option>
-            ))}
-          </select>
+          <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em] mb-3">Plan (toca una tarjeta)</label>
+          <div className="grid gap-3">
+            {plans.map((plan, i) => {
+              const selected = i === selectedPlanIndex;
+              const perClass = plan.classesPerMonth ? Math.round(plan.price / plan.classesPerMonth) : plan.price;
+              const usd = (plan.price / EXCHANGE_RATE).toFixed(2);
+              return (
+                <button
+                  key={`${plan.name}-${i}`}
+                  type="button"
+                  onClick={() => setSelectedPlanIndex(i)}
+                  className={`w-full text-left rounded-2xl border-2 p-4 transition-all ${
+                    selected
+                      ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10'
+                      : 'border-slate-200 bg-white hover:border-primary/40'
+                  }`}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div>
+                      <p className="font-black text-slate-900 uppercase tracking-wide text-sm sm:text-base">{plan.name}</p>
+                      <p className="text-xs text-slate-500">{plan.classesPerMonth ? `${plan.classesPerMonth} clases al mes` : 'Clase individual'}</p>
+                    </div>
+                    <div className="sm:text-right">
+                      <p className="font-black text-slate-900 text-xl leading-none">S/ {plan.price}</p>
+                      <p className="text-xs font-bold text-slate-500">US$ {usd} aprox.</p>
+                      <span className="text-[11px] font-bold text-primary bg-primary/10 px-2 py-1 rounded-full inline-block mt-1">S/ {perClass} por clase</span>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div>
@@ -111,11 +177,14 @@ export const BookingForm = () => {
           <div className="flex items-center gap-4">
             <Calendar className="text-primary" />
             <input
-              type="date"
-              min={today}
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              maxLength={10}
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => setDate(formatLatinDateInput(e.target.value))}
               className="w-full bg-white border-2 border-slate-100 rounded-2xl px-5 sm:px-6 py-4 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium"
+              placeholder="dd/mm/aaaa"
             />
           </div>
         </div>
@@ -151,7 +220,10 @@ export const BookingForm = () => {
 
         <div className="bg-slate-900 text-white p-6 rounded-2xl flex justify-between items-center mt-4">
           <span className="font-black uppercase tracking-widest">Total</span>
-          <span className="text-3xl font-black text-primary">S/ {totalPrice}</span>
+          <div className="text-right">
+            <p className="text-3xl font-black text-primary leading-none">S/ {totalPrice}</p>
+            <p className="text-xs font-bold text-white/70 mt-1">US$ {totalUsd.toFixed(2)} (TC {EXCHANGE_RATE})</p>
+          </div>
         </div>
 
         <button

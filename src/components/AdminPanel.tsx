@@ -1,7 +1,7 @@
 ﻿import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../AuthProvider";
 import { authenticatedFetch } from "../auth";
-import { LogOut, Save, Layout, DollarSign, Calendar, Image, BarChart3, Settings, Trash2, Plus } from "lucide-react";
+import { LogOut, Save, Layout, DollarSign, Calendar, Image, BarChart3, Settings, Trash2, Plus, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
 
 type Tab = "content" | "pricing" | "bookings" | "images" | "experience" | "reports" | "settings";
 
@@ -25,6 +25,14 @@ type GalleryImage = {
   alt: string;
 };
 
+type VideoItem = {
+  id: string;
+  url: string;
+  title?: string;
+};
+
+type ContentListKey = "galleryImages" | "experienceImages" | "videoLinks";
+
 const defaultContent = {
   heroTitle: "JAH SURF",
   heroSubtitle: "Donde el mar se encuentra con tu espíritu.",
@@ -47,6 +55,7 @@ const defaultContent = {
     { id: "e3", src: "", alt: "Olas en San Bartolo" },
     { id: "e4", src: "", alt: "Aprendiendo a surfear" },
   ] as GalleryImage[],
+  videoLinks: [] as VideoItem[],
 };
 
 const defaultPricing = [
@@ -71,6 +80,7 @@ export const AdminPanel = () => {
   const [settings, setSettings] = useState(defaultSettings);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [dragState, setDragState] = useState<{ listKey: ContentListKey; id: string } | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -110,6 +120,7 @@ export const AdminPanel = () => {
                 ...contentData, 
                 galleryImages: contentData.galleryImages ?? defaultContent.galleryImages,
                 experienceImages: contentData.experienceImages ?? defaultContent.experienceImages,
+                videoLinks: contentData.videoLinks ?? defaultContent.videoLinks,
               });
             }
           }
@@ -310,6 +321,124 @@ export const AdminPanel = () => {
       experienceImages: (content.experienceImages || []).filter((img: GalleryImage) => img.id !== id),
     });
   };
+
+  const addExperienceImage = () => {
+    const list = (content.experienceImages || []) as GalleryImage[];
+    if (list.length >= Number(settings.maxGalleryItems || 12)) {
+      alert("Llegaste al máximo de imágenes configurado.");
+      return;
+    }
+    setContent({
+      ...content,
+      experienceImages: [...list, { id: `e-${Date.now()}`, src: "", alt: "Nueva experiencia" }],
+    });
+  };
+
+  const normalizeVideoUrl = (url: string): string => {
+    if (!url) return url;
+    const safeUrl = url.trim();
+
+    const ytWatch = safeUrl.match(/(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{6,})/i);
+    if (ytWatch) return `https://www.youtube.com/embed/${ytWatch[1]}`;
+
+    const ytShort = safeUrl.match(/(?:youtu\.be\/)([a-zA-Z0-9_-]{6,})/i);
+    if (ytShort) return `https://www.youtube.com/embed/${ytShort[1]}`;
+
+    const ytEmbed = safeUrl.match(/(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{6,})/i);
+    if (ytEmbed) return `https://www.youtube.com/embed/${ytEmbed[1]}`;
+
+    const vimeo = safeUrl.match(/vimeo\.com\/(\d{6,})/i);
+    if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`;
+
+    return safeUrl;
+  };
+
+  const addVideoItem = () => {
+    const list = (content.videoLinks || []) as VideoItem[];
+    setContent({
+      ...content,
+      videoLinks: [...list, { id: `v-${Date.now()}`, url: "", title: "" }],
+    });
+  };
+
+  const updateVideoItem = (id: string, patch: Partial<VideoItem>) => {
+    setContent({
+      ...content,
+      videoLinks: (content.videoLinks || []).map((item: VideoItem) =>
+        item.id === id ? { ...item, ...patch } : item,
+      ),
+    });
+  };
+
+  const removeVideoItem = (id: string) => {
+    setContent({
+      ...content,
+      videoLinks: (content.videoLinks || []).filter((item: VideoItem) => item.id !== id),
+    });
+  };
+
+  const reorderContentList = (listKey: ContentListKey, fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return;
+
+    setContent((prev: typeof defaultContent) => {
+      const items = [...((prev[listKey] || []) as Array<GalleryImage | VideoItem>)];
+      const [movedItem] = items.splice(fromIndex, 1);
+      if (!movedItem) return prev;
+      items.splice(toIndex, 0, movedItem);
+      return { ...prev, [listKey]: items };
+    });
+  };
+
+  const moveContentItem = (listKey: ContentListKey, id: string, direction: -1 | 1) => {
+    const items = (content[listKey] || []) as Array<GalleryImage | VideoItem>;
+    const currentIndex = items.findIndex((item) => item.id === id);
+    const nextIndex = currentIndex + direction;
+    if (currentIndex === -1 || nextIndex < 0 || nextIndex >= items.length) return;
+    reorderContentList(listKey, currentIndex, nextIndex);
+  };
+
+  const handleDragStart = (listKey: ContentListKey, id: string) => {
+    setDragState({ listKey, id });
+  };
+
+  const handleDrop = (listKey: ContentListKey, targetId: string) => {
+    if (!dragState || dragState.listKey !== listKey || dragState.id === targetId) {
+      setDragState(null);
+      return;
+    }
+
+    const items = (content[listKey] || []) as Array<GalleryImage | VideoItem>;
+    const fromIndex = items.findIndex((item) => item.id === dragState.id);
+    const toIndex = items.findIndex((item) => item.id === targetId);
+    reorderContentList(listKey, fromIndex, toIndex);
+    setDragState(null);
+  };
+
+  const renderOrderControls = (listKey: ContentListKey, id: string, index: number, total: number) => (
+    <div className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => moveContentItem(listKey, id, -1)}
+        disabled={index === 0}
+        className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+        aria-label="Mover arriba"
+      >
+        <ArrowUp size={14} />
+      </button>
+      <button
+        type="button"
+        onClick={() => moveContentItem(listKey, id, 1)}
+        disabled={index === total - 1}
+        className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+        aria-label="Mover abajo"
+      >
+        <ArrowDown size={14} />
+      </button>
+      <div className="p-2 rounded-lg border border-dashed border-slate-300 text-slate-400 cursor-grab active:cursor-grabbing" aria-hidden="true">
+        <GripVertical size={14} />
+      </div>
+    </div>
+  );
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">Cargando panel administrativo...</div>;
@@ -543,8 +672,20 @@ export const AdminPanel = () => {
                 <h2 className="text-xl font-black uppercase tracking-wider">Galería</h2>
                 <button onClick={addGalleryItem} className="bg-slate-900 text-white px-4 py-2 rounded-lg inline-flex items-center gap-2"><Plus size={16} /> Agregar</button>
               </div>
-              {(content.galleryImages || []).map((img: GalleryImage) => (
-                <div key={img.id} className="border rounded-lg p-4 space-y-2">
+              {(content.galleryImages || []).map((img: GalleryImage, index: number, list: GalleryImage[]) => (
+                <div
+                  key={img.id}
+                  draggable
+                  onDragStart={() => handleDragStart("galleryImages", img.id)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => handleDrop("galleryImages", img.id)}
+                  onDragEnd={() => setDragState(null)}
+                  className={`border rounded-lg p-4 space-y-2 ${dragState?.listKey === "galleryImages" && dragState.id === img.id ? "opacity-60" : ""}`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-black uppercase tracking-wider text-slate-500">Posición {index + 1}</p>
+                    {renderOrderControls("galleryImages", img.id, index, list.length)}
+                  </div>
                   {img.src && (
                     <div className="relative w-full h-32 rounded-lg overflow-hidden border mb-3">
                       <img src={img.src} alt={img.alt || 'Gallery'} className="w-full h-full object-cover" />
@@ -581,18 +722,84 @@ export const AdminPanel = () => {
                 </div>
               ))}
             </div>
+
+            <div className="bg-white p-6 rounded-xl border space-y-4">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-black uppercase tracking-wider">Videos (Galería Multimedia)</h2>
+                <button onClick={addVideoItem} className="bg-slate-900 text-white px-4 py-2 rounded-lg inline-flex items-center gap-2"><Plus size={16} /> Agregar Video</button>
+              </div>
+
+              {(content.videoLinks || []).map((video: VideoItem, index: number, list: VideoItem[]) => (
+                <div
+                  key={video.id}
+                  draggable
+                  onDragStart={() => handleDragStart("videoLinks", video.id)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => handleDrop("videoLinks", video.id)}
+                  onDragEnd={() => setDragState(null)}
+                  className={`border rounded-lg p-4 space-y-2 ${dragState?.listKey === "videoLinks" && dragState.id === video.id ? "opacity-60" : ""}`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-black uppercase tracking-wider text-slate-500">Posición {index + 1}</p>
+                    {renderOrderControls("videoLinks", video.id, index, list.length)}
+                  </div>
+                  <label className="block text-xs font-black uppercase tracking-wider">Título (opcional)</label>
+                  <input
+                    value={video.title || ''}
+                    onChange={(e) => updateVideoItem(video.id, { title: e.target.value })}
+                    placeholder="Nombre del video"
+                    className="w-full border rounded-lg px-3 py-2"
+                  />
+                  <label className="block text-xs font-black uppercase tracking-wider">URL del video (YouTube/Vimeo/embed)</label>
+                  <input
+                    value={video.url}
+                    onChange={(e) => updateVideoItem(video.id, { url: e.target.value })}
+                    onBlur={(e) => updateVideoItem(video.id, { url: normalizeVideoUrl(e.target.value) })}
+                    placeholder="https://youtube.com/watch?v=..."
+                    className="w-full border rounded-lg px-3 py-2"
+                  />
+                  {video.url && (
+                    <div className="rounded-lg overflow-hidden border bg-slate-100 aspect-video">
+                      <iframe
+                        src={video.url}
+                        title={video.title || 'Preview video'}
+                        className="w-full h-full"
+                        loading="lazy"
+                        allow="autoplay; encrypted-media; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  )}
+                  <button onClick={() => removeVideoItem(video.id)} className="text-red-500 hover:text-red-700 inline-flex items-center gap-2"><Trash2 size={14} /> Eliminar</button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
         {activeTab === "experience" && (
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-xl border space-y-4">
-              <h2 className="text-xl font-black uppercase tracking-wider">Galería de Experiencia</h2>
-              <p className="text-sm text-slate-600">Administra las 4 imágenes que mostrarán tu experiencia en JAH SURF</p>
-              {(content.experienceImages || []).map((img: GalleryImage, idx: number) => (
-                <div key={img.id} className="border rounded-lg p-4 space-y-2">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-xl font-black uppercase tracking-wider">Galería de Experiencia</h2>
+                  <p className="text-sm text-slate-600">Administra imágenes dinámicas para experiencia (N+1)</p>
+                </div>
+                <button onClick={addExperienceImage} className="bg-slate-900 text-white px-4 py-2 rounded-lg inline-flex items-center gap-2"><Plus size={16} /> Agregar</button>
+              </div>
+              {(content.experienceImages || []).map((img: GalleryImage, idx: number, list: GalleryImage[]) => (
+                <div
+                  key={img.id}
+                  draggable
+                  onDragStart={() => handleDragStart("experienceImages", img.id)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => handleDrop("experienceImages", img.id)}
+                  onDragEnd={() => setDragState(null)}
+                  className={`border rounded-lg p-4 space-y-2 ${dragState?.listKey === "experienceImages" && dragState.id === img.id ? "opacity-60" : ""}`}
+                >
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-black text-sm uppercase">{idx + 1}. {img.alt}</h3>
+                    {renderOrderControls("experienceImages", img.id, idx, list.length)}
                   </div>
                   {img.src && (
                     <div className="relative w-full h-40 rounded-lg overflow-hidden border">
@@ -626,6 +833,7 @@ export const AdminPanel = () => {
                     placeholder="Descripción de la imagen"
                     className="w-full border rounded-lg px-3 py-2" 
                   />
+                  <button onClick={() => removeExperienceImage(img.id)} className="text-red-500 hover:text-red-700 inline-flex items-center gap-2"><Trash2 size={14} /> Eliminar</button>
                 </div>
               ))}
             </div>

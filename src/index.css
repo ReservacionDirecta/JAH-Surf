@@ -58,19 +58,23 @@
 }
 
 .glass {
-  @apply bg-white/70 backdrop-blur-md border border-white/20;
+  @apply border border-white/45 shadow-[0_12px_32px_-20px_rgba(15,23,42,0.28)];
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.88), rgb(255 255 255 / 0.78));
 }
 
 .glass-dark {
-  @apply bg-slate-900/80 backdrop-blur-md border border-white/10;
+  @apply border border-white/10 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.65)];
+  background: linear-gradient(180deg, rgb(15 23 42 / 0.9), rgb(15 23 42 / 0.82));
 }
 
 .glass-card {
-  @apply bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl;
+  @apply border border-white/20 shadow-lg;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.18), rgb(255 255 255 / 0.12));
 }
 
 .glass-modal {
-  @apply bg-white/80 backdrop-blur-xl border border-white/30 shadow-2xl;
+  @apply border border-white/40 shadow-[0_28px_70px_-32px_rgba(15,23,42,0.35)];
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.96), rgb(248 250 252 / 0.92));
 }
 
 .brand-liquid {
@@ -78,7 +82,33 @@
   background: linear-gradient(135deg, rgb(15 23 42 / 0.72), rgb(30 41 59 / 0.62));
   border: 1px solid rgb(255 255 255 / 0.2);
   box-shadow: 0 10px 24px -14px rgb(15 23 42 / 0.65), inset 0 1px 0 rgb(255 255 255 / 0.22);
-  backdrop-filter: blur(12px) saturate(1.1);
+}
+
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .glass {
+    -webkit-backdrop-filter: blur(6px) saturate(1.04);
+    backdrop-filter: blur(6px) saturate(1.04);
+  }
+
+  .glass-dark {
+    -webkit-backdrop-filter: blur(6px) saturate(1.04);
+    backdrop-filter: blur(6px) saturate(1.04);
+  }
+
+  .glass-card {
+    -webkit-backdrop-filter: blur(8px) saturate(1.05);
+    backdrop-filter: blur(8px) saturate(1.05);
+  }
+
+  .glass-modal {
+    -webkit-backdrop-filter: blur(10px) saturate(1.05);
+    backdrop-filter: blur(10px) saturate(1.05);
+  }
+
+  .brand-liquid {
+    -webkit-backdrop-filter: blur(8px) saturate(1.06);
+    backdrop-filter: blur(8px) saturate(1.06);
+  }
 }
 
 .brand-liquid::after {
@@ -169,6 +199,29 @@
 @media (max-width: 640px) {
   .custom-scrollbar::-webkit-scrollbar {
     width: 4px;
+  }
+}
+
+@media (max-width: 1024px), (hover: none), (pointer: coarse) {
+  .glass,
+  .glass-dark,
+  .glass-card,
+  .glass-modal,
+  .brand-liquid {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .glass {
+    background: rgb(255 255 255 / 0.92);
+  }
+
+  .glass-dark {
+    background: rgb(15 23 42 / 0.94);
+  }
+
+  .glass-modal {
+    background: rgb(255 255 255 / 0.97);
   }
 }
 
