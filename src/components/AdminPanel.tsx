@@ -91,43 +91,60 @@ export const AdminPanel = () => {
       if (!isAdmin) return;
 
       try {
-        const contentRes = await fetch("/api/store/content");
-        if (contentRes.ok) {
-          const contentData = await contentRes.json();
-          if (contentData) {
-            setContent({ 
-              ...defaultContent, 
-              ...contentData, 
-              galleryImages: contentData.galleryImages ?? defaultContent.galleryImages,
-              experienceImages: contentData.experienceImages ?? defaultContent.experienceImages,
-            });
+        const keysRes = await fetch('/api/store');
+        const availableKeys = new Set<string>();
+        if (keysRes.ok) {
+          const keys = await keysRes.json();
+          if (Array.isArray(keys)) {
+            keys.forEach((k) => availableKeys.add(String(k)));
           }
         }
 
-        const pricingRes = await fetch("/api/store/pricing");
-        if (pricingRes.ok) {
-          const pricingData = await pricingRes.json();
-          if (Array.isArray(pricingData)) setPricing(pricingData);
-        }
-
-        const bookingsRes = await fetch("/api/store/bookings");
-        if (bookingsRes.ok) {
-          const bookingsData = await bookingsRes.json();
-          if (Array.isArray(bookingsData)) {
-            const normalized = bookingsData.map((b: any, idx: number) => ({
-              ...b,
-              id: b.id || `${b.timestamp || "booking"}-${idx}`,
-              status: b.status || "pendiente",
-              notes: b.notes || "",
-            }));
-            setBookings(normalized.sort((a: Booking, b: Booking) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()));
+        if (availableKeys.has('content')) {
+          const contentRes = await fetch("/api/store/content");
+          if (contentRes.ok) {
+            const contentData = await contentRes.json();
+            if (contentData) {
+              setContent({ 
+                ...defaultContent, 
+                ...contentData, 
+                galleryImages: contentData.galleryImages ?? defaultContent.galleryImages,
+                experienceImages: contentData.experienceImages ?? defaultContent.experienceImages,
+              });
+            }
           }
         }
 
-        const settingsRes = await fetch("/api/store/settings");
-        if (settingsRes.ok) {
-          const settingsData = await settingsRes.json();
-          if (settingsData) setSettings({ ...defaultSettings, ...settingsData });
+        if (availableKeys.has('pricing')) {
+          const pricingRes = await fetch("/api/store/pricing");
+          if (pricingRes.ok) {
+            const pricingData = await pricingRes.json();
+            if (Array.isArray(pricingData)) setPricing(pricingData);
+          }
+        }
+
+        if (availableKeys.has('bookings')) {
+          const bookingsRes = await fetch("/api/store/bookings");
+          if (bookingsRes.ok) {
+            const bookingsData = await bookingsRes.json();
+            if (Array.isArray(bookingsData)) {
+              const normalized = bookingsData.map((b: any, idx: number) => ({
+                ...b,
+                id: b.id || `${b.timestamp || "booking"}-${idx}`,
+                status: b.status || "pendiente",
+                notes: b.notes || "",
+              }));
+              setBookings(normalized.sort((a: Booking, b: Booking) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()));
+            }
+          }
+        }
+
+        if (availableKeys.has('settings')) {
+          const settingsRes = await fetch("/api/store/settings");
+          if (settingsRes.ok) {
+            const settingsData = await settingsRes.json();
+            if (settingsData) setSettings({ ...defaultSettings, ...settingsData });
+          }
         }
       } catch (err) {
         console.error("Error loading admin data", err);
@@ -220,15 +237,7 @@ export const AdminPanel = () => {
     const formData = new FormData();
     formData.append('file', file);
 
-    try {
-      const response = await authenticatedFetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) throw new Error('Upload failed');
-      const { url } = await response.json();
-
+    const setUploadedUrl = (url: string) => {
       if (galleryId) {
         if (fieldName.startsWith('experience')) {
           updateExperienceImage(galleryId, { src: url });
@@ -236,11 +245,41 @@ export const AdminPanel = () => {
           updateGalleryItem(galleryId, { src: url });
         }
       } else {
-        setContent({ ...content, [fieldName]: url });
+        setContent((prev: any) => ({ ...prev, [fieldName]: url }));
       }
+    };
+
+    const toDataUrl = (imageFile: File) =>
+      new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('No se pudo leer la imagen localmente'));
+        reader.readAsDataURL(imageFile);
+      });
+
+    try {
+      const response = await authenticatedFetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          const localDataUrl = await toDataUrl(file);
+          setUploadedUrl(localDataUrl);
+          alert('El endpoint /api/upload no está disponible. Se guardó la imagen de forma local (base64) en tu contenido.');
+          return;
+        }
+        const errorBody = await response.text();
+        throw new Error(`Upload failed (${response.status}): ${errorBody || response.statusText}`);
+      }
+      const { url } = await response.json();
+
+      setUploadedUrl(url);
     } catch (err) {
       console.error('Upload error:', err);
-      alert('Error al subir la imagen');
+      const message = err instanceof Error ? err.message : 'Error al subir la imagen';
+      alert(message);
     } finally {
       setUploading(null);
     }

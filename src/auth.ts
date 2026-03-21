@@ -143,10 +143,12 @@ export async function authenticatedFetch(
   options: RequestInit = {}
 ): Promise<Response> {
   const token = getToken();
+  const isAbsoluteUrl = /^https?:\/\//i.test(url);
+  const requestUrl = isAbsoluteUrl ? url : `${API_BASE}${url}`;
   const headers = {
     ...options.headers,
     'Authorization': `Bearer ${token}`,
   };
 
-  return fetch(url, { ...options, headers });
+  return fetch(requestUrl, { ...options, headers });
 }

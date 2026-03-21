@@ -33,7 +33,9 @@ async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT || 3001);
 
-  app.use(express.json());
+  // Allow larger payloads for admin content updates (e.g., base64 image fallbacks).
+  app.use(express.json({ limit: '25mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 
   // Ensure /store exists (for local dev, Railway should have it mounted)
   const STORE_PATH = process.env.STORE_PATH || "/store";
