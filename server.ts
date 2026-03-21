@@ -6,6 +6,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import Busboy from "busboy";
+import sharp from "sharp";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -281,6 +283,98 @@ async function startServer() {
       res.status(500).json({ error: "Failed to list stored data" });
     }
   });
+
+  // Ensure /store/images directory exists
+  const IMAGES_PATH = path.join(STORE_PATH, 'images');
+  if (!fs.existsSync(IMAGES_PATH)) {
+    try {
+      fs.mkdirSync(IMAGES_PATH, { recursive: true });
+      console.log(`Created directory: ${IMAGES_PATH}`);
+    } catch (err) {
+      console.error(`Could not create ${IMAGES_PATH}:`, err);
+    }
+  }
+
+  // API Route to upload images (protected)
+  app.post("/api/upload", (req, res) => {
+    const user = (req as any).user;
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const bb = Busboy({ headers: req.headers, limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB limit
+    let uploadedFile: { fieldname: string; data: Buffer; mimetype: string; filename: string } | null = null;
+
+    bb.on('file', (fieldname, file, info) => {
+      const chunks: Buffer[] = [];
+
+      // Validate MIME type
+      if (!info.mimetype.startsWith('image/')) {
+        file.resume();
+        return;
+      }
+
+      file.on('data', data => chunks.push(data as Buffer));
+      file.on('end', () => {
+        uploadedFile = {
+          fieldname,
+          data: Buffer.concat(chunks),
+          mimetype: info.mimetype,
+          filename: info.filename
+        };
+      });
+
+      file.on('error', (err) => {
+        console.error('File stream error:', err);
+      });
+    });
+
+    bb.on('close', async () => {
+      if (!uploadedFile) {
+        return res.status(400).json({ error: "No image file provided" });
+      }
+
+      try {
+        // Generate unique filename
+        const ext = path.extname(uploadedFile.filename) || '.jpg';
+        const baseFileName = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}${ext}`;
+
+        // Optimize image with sharp (resize and compress)
+        const optimized = await sharp(uploadedFile.data)
+          .resize(1920, 1080, { fit: 'inside', withoutEnlargement: true })
+          .webp({ quality: 80 })
+          .toBuffer();
+
+        const finalFileName = baseFileName.replace(/\.[^.]+$/, '.webp');
+        const filePath = path.join(IMAGES_PATH, finalFileName);
+
+        fs.writeFileSync(filePath, optimized);
+        const imageUrl = `/api/images/${finalFileName}`;
+
+        console.log(`[UPLOAD] Image saved: ${imageUrl}`);
+        res.json({ success: true, url: imageUrl });
+      } catch (err) {
+        console.error('Image processing error:', err);
+        res.status(500).json({ error: "Failed to process image" });
+      }
+    });
+
+    bb.on('error', (err) => {
+      console.error('Busboy error:', err);
+      res.status(400).json({ error: "Upload error" });
+    });
+
+    req.pipe(bb);
+  });
+
+  // Serve uploaded images
+  app.use('/api/images', express.static(IMAGES_PATH, {
+    maxAge: '7d',
+    etag: false,
+    setHeaders: (res) => {
+      res.setHeader('Cache-Control', 'public, max-age=604800'); // 7 days
+    }
+  }));
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

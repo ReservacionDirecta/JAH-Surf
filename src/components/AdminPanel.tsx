@@ -63,6 +63,7 @@ export const AdminPanel = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [settings, setSettings] = useState(defaultSettings);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -195,6 +196,38 @@ export const AdminPanel = () => {
       ...content,
       galleryImages: (content.galleryImages || []).filter((img: GalleryImage) => img.id !== id),
     });
+  };
+
+  const handleImageUpload = async (file: File, fieldName: string, galleryId?: string) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor selecciona un archivo de imagen válido');
+      return;
+    }
+
+    setUploading(fieldName);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await authenticatedFetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Upload failed');
+      const { url } = await response.json();
+
+      if (galleryId) {
+        updateGalleryItem(galleryId, { src: url });
+      } else {
+        setContent({ ...content, [fieldName]: url });
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+      alert('Error al subir la imagen');
+    } finally {
+      setUploading(null);
+    }
   };
 
   if (isLoading) {
@@ -366,24 +399,99 @@ export const AdminPanel = () => {
         {activeTab === "images" && (
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-xl border space-y-4">
-              <h2 className="text-xl font-black uppercase tracking-wider">Imagenes principales</h2>
-              <label className="block text-xs font-black uppercase tracking-wider">Hero Image URL</label>
-              <input value={content.heroImageUrl || ""} onChange={(e) => setContent({ ...content, heroImageUrl: e.target.value })} className="w-full border rounded-lg px-4 py-3" />
-              <label className="block text-xs font-black uppercase tracking-wider">About Image URL</label>
-              <input value={content.aboutImageUrl || ""} onChange={(e) => setContent({ ...content, aboutImageUrl: e.target.value })} className="w-full border rounded-lg px-4 py-3" />
+              <h2 className="text-xl font-black uppercase tracking-wider">Imagen de Hero</h2>
+              {content.heroImageUrl && (
+                <div className="relative w-full h-48 rounded-lg overflow-hidden border">
+                  <img src={content.heroImageUrl} alt="Hero" className="w-full h-full object-cover" />
+                </div>
+              )}
+              <label className="block text-xs font-black uppercase tracking-wider">URL o Subir Archivo</label>
+              <div className="flex gap-3">
+                <input 
+                  value={content.heroImageUrl || ""} 
+                  onChange={(e) => setContent({ ...content, heroImageUrl: e.target.value })} 
+                  placeholder="https://ejemplo.com/imagen.jpg"
+                  className="flex-1 border rounded-lg px-4 py-3" 
+                />
+                <label className="cursor-pointer bg-slate-900 text-white px-4 py-3 rounded-lg font-medium hover:bg-slate-800 transition">
+                  {uploading === 'heroImageUrl' ? 'Subiendo...' : 'Subir'}
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'heroImageUrl')}
+                    disabled={uploading !== null}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl border space-y-4">
+              <h2 className="text-xl font-black uppercase tracking-wider">Imagen de About</h2>
+              {content.aboutImageUrl && (
+                <div className="relative w-full h-48 rounded-lg overflow-hidden border">
+                  <img src={content.aboutImageUrl} alt="About" className="w-full h-full object-cover" />
+                </div>
+              )}
+              <label className="block text-xs font-black uppercase tracking-wider">URL o Subir Archivo</label>
+              <div className="flex gap-3">
+                <input 
+                  value={content.aboutImageUrl || ""} 
+                  onChange={(e) => setContent({ ...content, aboutImageUrl: e.target.value })} 
+                  placeholder="https://ejemplo.com/imagen.jpg"
+                  className="flex-1 border rounded-lg px-4 py-3" 
+                />
+                <label className="cursor-pointer bg-slate-900 text-white px-4 py-3 rounded-lg font-medium hover:bg-slate-800 transition">
+                  {uploading === 'aboutImageUrl' ? 'Subiendo...' : 'Subir'}
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'aboutImageUrl')}
+                    disabled={uploading !== null}
+                  />
+                </label>
+              </div>
             </div>
 
             <div className="bg-white p-6 rounded-xl border space-y-4">
               <div className="flex justify-between items-center">
-                <h2 className="text-xl font-black uppercase tracking-wider">Galeria</h2>
+                <h2 className="text-xl font-black uppercase tracking-wider">Galería</h2>
                 <button onClick={addGalleryItem} className="bg-slate-900 text-white px-4 py-2 rounded-lg inline-flex items-center gap-2"><Plus size={16} /> Agregar</button>
               </div>
               {(content.galleryImages || []).map((img: GalleryImage) => (
                 <div key={img.id} className="border rounded-lg p-4 space-y-2">
-                  <label className="block text-xs font-black uppercase tracking-wider">URL</label>
-                  <input value={img.src} onChange={(e) => updateGalleryItem(img.id, { src: e.target.value })} className="w-full border rounded-lg px-3 py-2" />
-                  <label className="block text-xs font-black uppercase tracking-wider">ALT</label>
-                  <input value={img.alt} onChange={(e) => updateGalleryItem(img.id, { alt: e.target.value })} className="w-full border rounded-lg px-3 py-2" />
+                  {img.src && (
+                    <div className="relative w-full h-32 rounded-lg overflow-hidden border mb-3">
+                      <img src={img.src} alt={img.alt || 'Gallery'} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <label className="block text-xs font-black uppercase tracking-wider">URL o Subir Archivo</label>
+                  <div className="flex gap-3">
+                    <input 
+                      value={img.src} 
+                      onChange={(e) => updateGalleryItem(img.id, { src: e.target.value })} 
+                      placeholder="https://ejemplo.com/imagen.jpg"
+                      className="flex-1 border rounded-lg px-3 py-2" 
+                    />
+                    <label className="cursor-pointer bg-slate-900 text-white px-3 py-2 rounded-lg font-medium hover:bg-slate-800 transition text-sm">
+                      {uploading === img.id ? 'Subiendo...' : 'Subir'}
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'galleryImage', img.id)}
+                        disabled={uploading !== null}
+                      />
+                    </label>
+                  </div>
+                  <label className="block text-xs font-black uppercase tracking-wider">Descripción (ALT)</label>
+                  <input 
+                    value={img.alt} 
+                    onChange={(e) => updateGalleryItem(img.id, { alt: e.target.value })} 
+                    placeholder="Descripción de la imagen"
+                    className="w-full border rounded-lg px-3 py-2" 
+                  />
                   <button onClick={() => removeGalleryItem(img.id)} className="text-red-500 hover:text-red-700 inline-flex items-center gap-2"><Trash2 size={14} /> Eliminar</button>
                 </div>
               ))}
