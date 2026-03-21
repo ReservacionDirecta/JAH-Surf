@@ -587,8 +587,16 @@ const PricingModal = ({ isOpen, onClose, title, packages, color }) => {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('9hs a 11hs');
   const [whatsapp, setWhatsapp] = useState('');
+  const [selectedPackageIndex, setSelectedPackageIndex] = useState(0);
+  const [numPeople, setNumPeople] = useState(1);
   const prefersReducedMotion = useReducedMotion();
   const timeOptions = ['9hs a 11hs', '12hs a 2pm', '3pm a 5pm'];
+
+  const extractPenAmount = (priceLabel: string) => {
+    const penMatch = priceLabel.match(/S\/\s*([\d.,]+)/i);
+    const rawValue = penMatch?.[1] ?? priceLabel.match(/([\d.,]+)/)?.[1] ?? '0';
+    return Number(rawValue.replace(/,/g, '')) || 0;
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -607,22 +615,35 @@ const PricingModal = ({ isOpen, onClose, title, packages, color }) => {
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    setSelectedPackageIndex(0);
+    setNumPeople(1);
+  }, [isOpen, title]);
+
   if (!isOpen) return null;
+
+  const selectedPackage = packages[selectedPackageIndex] || packages[0];
+  const selectedPackagePrice = selectedPackage ? extractPenAmount(selectedPackage.price) : 0;
+  const totalPrice = selectedPackagePrice * numPeople;
 
   const colorClasses = {
     primary: {
       border: 'hover:border-primary/30',
       badge: 'text-primary bg-primary/10',
+      selected: 'border-primary bg-primary/10 ring-2 ring-primary/15',
       button: 'bg-primary hover:bg-primary/90 shadow-primary/20'
     },
     secondary: {
       border: 'hover:border-secondary/30',
       badge: 'text-secondary bg-secondary/10',
+      selected: 'border-secondary bg-secondary/10 ring-2 ring-secondary/15',
       button: 'bg-secondary hover:bg-secondary/90 shadow-secondary/20'
     },
     accent: {
       border: 'hover:border-accent/30',
       badge: 'text-amber-900 bg-amber-200',
+      selected: 'border-accent bg-amber-50 ring-2 ring-accent/15',
       button: 'bg-amber-600 hover:bg-amber-700 shadow-amber-200'
     }
   }[color || 'primary'];
@@ -659,7 +680,12 @@ const PricingModal = ({ isOpen, onClose, title, packages, color }) => {
             <div className="p-6 md:p-8 border-b lg:border-b-0 lg:border-r border-slate-200">
               <div className="grid gap-4">
                 {packages.map((pkg, i) => (
-                  <div key={i} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 md:p-6 rounded-3xl bg-slate-50 border border-slate-200 ${colorClasses.border} transition-colors duration-200`}>
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setSelectedPackageIndex(i)}
+                    className={`w-full text-left flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 md:p-6 rounded-3xl bg-slate-50 border transition-colors duration-200 ${i === selectedPackageIndex ? colorClasses.selected : `border-slate-200 ${colorClasses.border}`}`}
+                  >
                     <div className="mb-4 sm:mb-0">
                       <h4 className="font-bold text-lg md:text-xl text-slate-900">{pkg.name}</h4>
                       <p className="text-slate-500 font-medium">{pkg.desc}</p>
@@ -674,7 +700,7 @@ const PricingModal = ({ isOpen, onClose, title, packages, color }) => {
                         )}
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
@@ -695,7 +721,37 @@ const PricingModal = ({ isOpen, onClose, title, packages, color }) => {
                 <select value={time} onChange={(e) => setTime(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-5 py-4">
                   {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
+                <div className="space-y-2">
+                  <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em]">Personas</label>
+                  <div className="flex items-center gap-3 rounded-2xl border-2 border-slate-100 bg-white px-4 py-3">
+                    <Users className="w-5 h-5 text-primary" />
+                    <input
+                      type="number"
+                      min="1"
+                      inputMode="numeric"
+                      value={numPeople}
+                      onChange={(e) => setNumPeople(Math.max(1, Number(e.target.value) || 1))}
+                      className="w-full bg-transparent outline-none"
+                    />
+                  </div>
+                </div>
                 <input type="tel" placeholder="WhatsApp" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-5 py-4" />
+
+                <div className="rounded-2xl bg-slate-900 text-white p-5">
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-white/70 mb-2">Reserva seleccionada</p>
+                  <p className="font-black text-lg leading-tight">{selectedPackage?.name || 'Selecciona un paquete'}</p>
+                  <div className="mt-3 flex items-end justify-between gap-4">
+                    <div>
+                      <p className="text-xs text-white/70">{numPeople} {numPeople === 1 ? 'persona' : 'personas'}</p>
+                      <p className="text-3xl font-black text-primary">S/ {totalPrice}</p>
+                    </div>
+                    {selectedPackage?.perClass && (
+                      <span className={`font-bold text-xs ${colorClasses.badge} px-3 py-1 rounded-full`}>
+                        {selectedPackage.perClass} <span className="text-[10px] opacity-70 uppercase">por clase</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
 
                 <button
                   onClick={async () => {
@@ -720,9 +776,12 @@ const PricingModal = ({ isOpen, onClose, title, packages, color }) => {
 
                     const bookingData = {
                       activity: title,
+                      plan: selectedPackage?.name || '',
                       name,
+                      numPeople,
                       date,
                       time,
+                      totalPrice,
                       whatsapp,
                       timestamp: new Date().toISOString()
                     };
@@ -745,9 +804,12 @@ const PricingModal = ({ isOpen, onClose, title, packages, color }) => {
 
                     const message = `Hola JAH SURF Peru, quiero reservar:
 - Actividad: ${title}
+- Paquete: ${selectedPackage?.name || 'No especificado'}
 - Nombre: ${name}
+- Personas: ${numPeople}
 - Fecha: ${date}
 - Horario: ${time}
+- Total: S/ ${totalPrice}
 - Mi WhatsApp: ${whatsapp}`;
                     window.open(`https://wa.me/51952641118?text=${encodeURIComponent(message)}`, '_blank');
                   }}
@@ -1066,9 +1128,6 @@ const Footer = () => {
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-8 md:gap-12">
           <div className="flex items-center gap-3">
-            <div className="bg-primary p-2 rounded-xl">
-              <Waves className="text-white w-8 h-8" />
-            </div>
             <BrandName className="text-white text-2xl" /> <span className="text-accent text-2xl font-display font-black uppercase tracking-tighter">Peru</span>
           </div>
           
