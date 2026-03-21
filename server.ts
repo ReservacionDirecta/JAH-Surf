@@ -7,7 +7,6 @@ import { fileURLToPath } from "url";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import Busboy from "busboy";
-import sharp from "sharp";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -302,20 +301,40 @@ async function startServer() {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    const bb = Busboy({ headers: req.headers, limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB limit
+    let bb;
+    try {
+      bb = Busboy({ headers: req.headers, limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB limit
+    } catch (err) {
+      console.error('Busboy init error:', err);
+      return res.status(400).json({ error: "Invalid multipart request" });
+    }
+
     let uploadedFile: { fieldname: string; data: Buffer; mimetype: string; filename: string } | null = null;
+    let uploadRejected = false;
+    let responseSent = false;
+
+    const sendOnce = (status: number, payload: any) => {
+      if (responseSent) return;
+      responseSent = true;
+      res.status(status).json(payload);
+    };
 
     bb.on('file', (fieldname, file, info) => {
       const chunks: Buffer[] = [];
 
       // Validate MIME type
       if (!info.mimetype.startsWith('image/')) {
+        uploadRejected = true;
         file.resume();
         return;
       }
 
       file.on('data', data => chunks.push(data as Buffer));
+      file.on('limit', () => {
+        uploadRejected = true;
+      });
       file.on('end', () => {
+        if (uploadRejected) return;
         uploadedFile = {
           fieldname,
           data: Buffer.concat(chunks),
@@ -330,38 +349,34 @@ async function startServer() {
     });
 
     bb.on('close', async () => {
+      if (uploadRejected) {
+        return sendOnce(400, { error: "Invalid image or file too large (max 5MB)" });
+      }
+
       if (!uploadedFile) {
-        return res.status(400).json({ error: "No image file provided" });
+        return sendOnce(400, { error: "No image file provided" });
       }
 
       try {
         // Generate unique filename
         const ext = path.extname(uploadedFile.filename) || '.jpg';
-        const baseFileName = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}${ext}`;
-
-        // Optimize image with sharp (resize and compress)
-        const optimized = await sharp(uploadedFile.data)
-          .resize(1920, 1080, { fit: 'inside', withoutEnlargement: true })
-          .webp({ quality: 80 })
-          .toBuffer();
-
-        const finalFileName = baseFileName.replace(/\.[^.]+$/, '.webp');
+        const finalFileName = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}${ext.toLowerCase()}`;
         const filePath = path.join(IMAGES_PATH, finalFileName);
 
-        fs.writeFileSync(filePath, optimized);
+        fs.writeFileSync(filePath, uploadedFile.data);
         const imageUrl = `/api/images/${finalFileName}`;
 
         console.log(`[UPLOAD] Image saved: ${imageUrl}`);
-        res.json({ success: true, url: imageUrl });
+        sendOnce(200, { success: true, url: imageUrl });
       } catch (err) {
-        console.error('Image processing error:', err);
-        res.status(500).json({ error: "Failed to process image" });
+        console.error('Image save error:', err);
+        sendOnce(500, { error: "Failed to store image" });
       }
     });
 
     bb.on('error', (err) => {
       console.error('Busboy error:', err);
-      res.status(400).json({ error: "Upload error" });
+      sendOnce(400, { error: "Upload error" });
     });
 
     req.pipe(bb);
