@@ -323,9 +323,12 @@ async function startServer() {
 
     bb.on('file', (fieldname, file, info) => {
       const chunks: Buffer[] = [];
+      const safeInfo = typeof info === 'object' && info !== null ? info : {};
+      const mimeType = (safeInfo as any).mimeType || (safeInfo as any).mimetype || '';
+      const originalFilename = (safeInfo as any).filename || 'upload.jpg';
 
       // Validate MIME type
-      if (!info.mimetype.startsWith('image/')) {
+      if (!mimeType.startsWith('image/')) {
         uploadRejected = true;
         file.resume();
         return;
@@ -340,8 +343,8 @@ async function startServer() {
         uploadedFile = {
           fieldname,
           data: Buffer.concat(chunks),
-          mimetype: info.mimetype,
-          filename: info.filename
+          mimetype: mimeType,
+          filename: originalFilename
         };
       });
 

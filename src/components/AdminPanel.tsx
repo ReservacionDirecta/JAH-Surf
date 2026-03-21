@@ -227,6 +227,16 @@ export const AdminPanel = () => {
     });
   };
 
+  /** Converts imgur page URLs to direct image URLs.
+   *  https://imgur.com/ZkoAVs0  →  https://i.imgur.com/ZkoAVs0.jpg
+   *  Already-direct i.imgur.com URLs are left unchanged. */
+  const normalizeImageUrl = (url: string): string => {
+    if (!url) return url;
+    const m = url.match(/^https?:\/\/(?:www\.)?imgur\.com\/([A-Za-z0-9]+)(?:\.[a-zA-Z]{3,4})?$/);
+    if (m) return `https://i.imgur.com/${m[1]}.jpg`;
+    return url;
+  };
+
   const handleImageUpload = async (file: File, fieldName: string, galleryId?: string) => {
     if (!file.type.startsWith('image/')) {
       alert('Por favor selecciona un archivo de imagen válido');
@@ -482,6 +492,7 @@ export const AdminPanel = () => {
                 <input 
                   value={content.heroImageUrl || ""} 
                   onChange={(e) => setContent({ ...content, heroImageUrl: e.target.value })} 
+                  onBlur={(e) => setContent((prev: any) => ({ ...prev, heroImageUrl: normalizeImageUrl(e.target.value) }))}
                   placeholder="https://ejemplo.com/imagen.jpg"
                   className="flex-1 border rounded-lg px-4 py-3" 
                 />
@@ -510,6 +521,7 @@ export const AdminPanel = () => {
                 <input 
                   value={content.aboutImageUrl || ""} 
                   onChange={(e) => setContent({ ...content, aboutImageUrl: e.target.value })} 
+                  onBlur={(e) => setContent((prev: any) => ({ ...prev, aboutImageUrl: normalizeImageUrl(e.target.value) }))}
                   placeholder="https://ejemplo.com/imagen.jpg"
                   className="flex-1 border rounded-lg px-4 py-3" 
                 />
@@ -543,6 +555,7 @@ export const AdminPanel = () => {
                     <input 
                       value={img.src} 
                       onChange={(e) => updateGalleryItem(img.id, { src: e.target.value })} 
+                      onBlur={(e) => updateGalleryItem(img.id, { src: normalizeImageUrl(e.target.value) })}
                       placeholder="https://ejemplo.com/imagen.jpg"
                       className="flex-1 border rounded-lg px-3 py-2" 
                     />
@@ -591,6 +604,7 @@ export const AdminPanel = () => {
                     <input 
                       value={img.src} 
                       onChange={(e) => updateExperienceImage(img.id, { src: e.target.value })} 
+                      onBlur={(e) => updateExperienceImage(img.id, { src: normalizeImageUrl(e.target.value) })}
                       placeholder="https://ejemplo.com/imagen.jpg"
                       className="flex-1 border rounded-lg px-3 py-2" 
                     />
