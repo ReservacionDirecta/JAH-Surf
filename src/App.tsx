@@ -410,13 +410,18 @@ const Gallery = () => {
   const [galleryPhotos, setGalleryPhotos] = useState<{ src: string; alt: string }[]>([]);
   const [videos, setVideos] = useState<{ id: string; url: string; title?: string }[]>([]);
 
+  const isPortraitVideoUrl = (rawUrl: string, embedUrl?: string) => {
+    const source = `${rawUrl || ''} ${embedUrl || ''}`.toLowerCase();
+    return source.includes('/shorts/') || source.includes('shorts=1');
+  };
+
   const toEmbedUrl = (rawUrl: string) => {
     if (!rawUrl) return '';
 
     const safeUrl = rawUrl.trim();
 
-    const buildYouTubeEmbedUrl = (videoId: string) => (
-      `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&rel=0&playsinline=1`
+    const buildYouTubeEmbedUrl = (videoId: string, isShort = false) => (
+      `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&rel=0&playsinline=1${isShort ? '&shorts=1' : ''}`
     );
 
     try {
@@ -435,7 +440,7 @@ const Gallery = () => {
         }
 
         if ((pathParts[0] === 'embed' || pathParts[0] === 'shorts' || pathParts[0] === 'live') && pathParts[1]) {
-          return buildYouTubeEmbedUrl(pathParts[1]);
+          return buildYouTubeEmbedUrl(pathParts[1], pathParts[0] === 'shorts');
         }
       }
 
@@ -515,6 +520,7 @@ const Gallery = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {videos.filter((v) => v.url).map((video, i) => {
               const embedUrl = toEmbedUrl(video.url);
+              const isPortraitVideo = isPortraitVideoUrl(video.url, embedUrl);
 
               if (!embedUrl) {
                 return (
@@ -534,16 +540,18 @@ const Gallery = () => {
               }
 
               return (
-                <div key={video.id || `video-${i}`} className="rounded-3xl overflow-hidden shadow-lg bg-slate-900 aspect-video">
-                  <iframe
-                    src={embedUrl}
-                    title={video.title || `Video ${i + 1}`}
-                    className="w-full h-full"
-                    loading="lazy"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-                    allowFullScreen
-                  />
+                <div key={video.id || `video-${i}`} className="flex justify-center">
+                  <div className={`rounded-3xl overflow-hidden shadow-lg bg-slate-900 ${isPortraitVideo ? 'w-full max-w-[14rem] sm:max-w-[16rem] md:max-w-[18rem] lg:max-w-[20rem] aspect-[9/16]' : 'w-full max-w-[20rem] sm:max-w-[26rem] md:max-w-[32rem] lg:max-w-[38rem] aspect-video'}`}>
+                    <iframe
+                      src={embedUrl}
+                      title={video.title || `Video ${i + 1}`}
+                      className="w-full h-full"
+                      loading="lazy"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                      allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                      allowFullScreen
+                    />
+                  </div>
                 </div>
               );
             })}

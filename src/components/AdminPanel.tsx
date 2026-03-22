@@ -183,7 +183,18 @@ export const AdminPanel = () => {
     }
   };
 
-  const saveContent = () => saveByKey("content", content, "Contenido guardado con éxito");
+  const saveContent = () => {
+    const sanitizedVideoLinks = (content.videoLinks || []).map((item: VideoItem) => ({
+      ...item,
+      url: normalizeVideoUrl(item.url),
+    }));
+
+    saveByKey(
+      "content",
+      { ...content, videoLinks: sanitizedVideoLinks },
+      "Contenido guardado con éxito",
+    );
+  };
   const savePricing = () => saveByKey("pricing", pricing, "Precios guardados con éxito");
   const saveBookings = () => saveByKey("bookings", bookings, "Reservas actualizadas con éxito");
   const saveSettings = () => saveByKey("settings", settings, "Ajustes guardados con éxito");
@@ -335,23 +346,55 @@ export const AdminPanel = () => {
     });
   };
 
+  const buildYouTubeEmbedUrl = (videoId: string, isShort = false): string => `https://www.youtube-nocookie.com/embed/${videoId}${isShort ? '?shorts=1' : ''}`;
+
+  const isPortraitVideoUrl = (rawUrl: string, embedUrl?: string) => {
+    const source = `${rawUrl || ''} ${embedUrl || ''}`.toLowerCase();
+    return source.includes('/shorts/') || source.includes('shorts=1');
+  };
+
+  const getVideoEmbedUrl = (url: string): string => {
+    if (!url) return "";
+    const safeUrl = url.trim();
+
+    try {
+      const parsedUrl = new URL(safeUrl);
+      const host = parsedUrl.hostname.replace(/^www\./i, '').toLowerCase();
+      const pathParts = parsedUrl.pathname.split('/').filter(Boolean);
+
+      if (host === 'youtu.be' && pathParts[0]) {
+        return buildYouTubeEmbedUrl(pathParts[0]);
+      }
+
+      if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com') {
+        const videoIdFromQuery = parsedUrl.searchParams.get('v');
+        if (parsedUrl.pathname === '/watch' && videoIdFromQuery) {
+          return buildYouTubeEmbedUrl(videoIdFromQuery);
+        }
+
+        if ((pathParts[0] === 'embed' || pathParts[0] === 'shorts' || pathParts[0] === 'live') && pathParts[1]) {
+          return buildYouTubeEmbedUrl(pathParts[1], pathParts[0] === 'shorts');
+        }
+      }
+
+      if (host === 'vimeo.com' && pathParts[0]) {
+        return `https://player.vimeo.com/video/${pathParts[0]}`;
+      }
+    } catch {
+      const fallbackVideoId = safeUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([a-zA-Z0-9_-]{6,})/i)?.[1];
+      if (fallbackVideoId) {
+        return buildYouTubeEmbedUrl(fallbackVideoId);
+      }
+    }
+
+    return '';
+  };
+
   const normalizeVideoUrl = (url: string): string => {
     if (!url) return url;
     const safeUrl = url.trim();
-
-    const ytWatch = safeUrl.match(/(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{6,})/i);
-    if (ytWatch) return `https://www.youtube.com/embed/${ytWatch[1]}`;
-
-    const ytShort = safeUrl.match(/(?:youtu\.be\/)([a-zA-Z0-9_-]{6,})/i);
-    if (ytShort) return `https://www.youtube.com/embed/${ytShort[1]}`;
-
-    const ytEmbed = safeUrl.match(/(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{6,})/i);
-    if (ytEmbed) return `https://www.youtube.com/embed/${ytEmbed[1]}`;
-
-    const vimeo = safeUrl.match(/vimeo\.com\/(\d{6,})/i);
-    if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`;
-
-    return safeUrl;
+    const embedUrl = getVideoEmbedUrl(safeUrl);
+    return embedUrl || safeUrl;
   };
 
   const addVideoItem = () => {
@@ -775,50 +818,63 @@ export const AdminPanel = () => {
                 <button onClick={addVideoItem} className="bg-slate-900 text-white px-4 py-2 rounded-lg inline-flex items-center gap-2"><Plus size={16} /> Agregar Video</button>
               </div>
 
-              {(content.videoLinks || []).map((video: VideoItem, index: number, list: VideoItem[]) => (
-                <div
-                  key={video.id}
-                  draggable
-                  onDragStart={() => handleDragStart("videoLinks", video.id)}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={() => handleDrop("videoLinks", video.id)}
-                  onDragEnd={() => setDragState(null)}
-                  className={`border rounded-lg p-4 space-y-2 ${dragState?.listKey === "videoLinks" && dragState.id === video.id ? "opacity-60" : ""}`}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-black uppercase tracking-wider text-slate-500">Posición {index + 1}</p>
-                    {renderOrderControls("videoLinks", video.id, index, list.length)}
-                  </div>
-                  <label className="block text-xs font-black uppercase tracking-wider">Título (opcional)</label>
-                  <input
-                    value={video.title || ''}
-                    onChange={(e) => updateVideoItem(video.id, { title: e.target.value })}
-                    placeholder="Nombre del video"
-                    className="w-full border rounded-lg px-3 py-2"
-                  />
-                  <label className="block text-xs font-black uppercase tracking-wider">URL del video (YouTube/Vimeo/embed)</label>
-                  <input
-                    value={video.url}
-                    onChange={(e) => updateVideoItem(video.id, { url: e.target.value })}
-                    onBlur={(e) => updateVideoItem(video.id, { url: normalizeVideoUrl(e.target.value) })}
-                    placeholder="https://youtube.com/watch?v=..."
-                    className="w-full border rounded-lg px-3 py-2"
-                  />
-                  {video.url && (
-                    <div className="rounded-lg overflow-hidden border bg-slate-100 aspect-video">
-                      <iframe
-                        src={video.url}
-                        title={video.title || 'Preview video'}
-                        className="w-full h-full"
-                        loading="lazy"
-                        allow="autoplay; encrypted-media; picture-in-picture"
-                        allowFullScreen
-                      />
+              {(content.videoLinks || []).map((video: VideoItem, index: number, list: VideoItem[]) => {
+                const previewUrl = getVideoEmbedUrl(video.url);
+                const isPortraitVideo = isPortraitVideoUrl(video.url, previewUrl);
+
+                return (
+                  <div
+                    key={video.id}
+                    draggable
+                    onDragStart={() => handleDragStart("videoLinks", video.id)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => handleDrop("videoLinks", video.id)}
+                    onDragEnd={() => setDragState(null)}
+                    className={`border rounded-lg p-4 space-y-2 ${dragState?.listKey === "videoLinks" && dragState.id === video.id ? "opacity-60" : ""}`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs font-black uppercase tracking-wider text-slate-500">Posición {index + 1}</p>
+                      {renderOrderControls("videoLinks", video.id, index, list.length)}
                     </div>
-                  )}
-                  <button onClick={() => removeVideoItem(video.id)} className="text-red-500 hover:text-red-700 inline-flex items-center gap-2"><Trash2 size={14} /> Eliminar</button>
-                </div>
-              ))}
+                    <label className="block text-xs font-black uppercase tracking-wider">Título (opcional)</label>
+                    <input
+                      value={video.title || ''}
+                      onChange={(e) => updateVideoItem(video.id, { title: e.target.value })}
+                      placeholder="Nombre del video"
+                      className="w-full border rounded-lg px-3 py-2"
+                    />
+                    <label className="block text-xs font-black uppercase tracking-wider">URL del video (YouTube/Vimeo/embed)</label>
+                    <input
+                      value={video.url}
+                      onChange={(e) => updateVideoItem(video.id, { url: e.target.value })}
+                      onBlur={(e) => updateVideoItem(video.id, { url: normalizeVideoUrl(e.target.value) })}
+                      placeholder="https://youtube.com/watch?v=..."
+                      className="w-full border rounded-lg px-3 py-2"
+                    />
+                    {video.url && previewUrl && (
+                      <div className="flex justify-center">
+                        <div className={`rounded-lg overflow-hidden border bg-slate-100 ${isPortraitVideo ? 'w-full max-w-[12rem] sm:max-w-[14rem] md:max-w-[16rem] lg:max-w-[18rem] aspect-[9/16]' : 'w-full max-w-[20rem] sm:max-w-[24rem] md:max-w-[30rem] lg:max-w-[36rem] aspect-video'}`}>
+                        <iframe
+                          src={previewUrl}
+                          title={video.title || 'Preview video'}
+                          className="w-full h-full"
+                          loading="lazy"
+                          referrerPolicy="strict-origin-when-cross-origin"
+                          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                          allowFullScreen
+                        />
+                        </div>
+                      </div>
+                    )}
+                    {video.url && !previewUrl && (
+                      <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                        URL no embebible. Usa un enlace de YouTube (watch, shorts, youtu.be) o Vimeo.
+                      </p>
+                    )}
+                    <button onClick={() => removeVideoItem(video.id)} className="text-red-500 hover:text-red-700 inline-flex items-center gap-2"><Trash2 size={14} /> Eliminar</button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
