@@ -96,7 +96,7 @@ const Navbar = () => {
       <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled || isMobileMenuOpen ? 'glass py-3 shadow-xl shadow-slate-900/5' : 'bg-transparent py-5 md:py-8'}`}>
         <div className="container mx-auto px-4 sm:px-6 flex justify-between items-center">
           <a href="#inicio" aria-label="Ir al inicio de JAH SURF Peru" title="JAH SURF Peru" className="brand-liquid group inline-flex items-center rounded-2xl px-3.5 py-2.5 transition-all duration-300 hover:scale-[1.02]">
-            <Logo size="sm" shape="circle" className="w-12 h-12 text-[11px]" />
+            <Logo size="sm" shape="circle" />
           </a>
 
           {/* Desktop Menu */}
@@ -1152,7 +1152,7 @@ const Footer = () => {
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-8 md:gap-12">
           <div className="flex items-center gap-3">
-            <Logo size="sm" shape="circle" className="w-12 h-12 text-[11px]" /> <span className="text-accent text-2xl font-display font-black uppercase tracking-tighter">Peru</span>
+            <Logo size="sm" shape="circle" /> <span className="text-accent text-2xl font-display font-black uppercase tracking-tighter">Peru</span>
           </div>
           
           <div className="text-center md:text-left">
