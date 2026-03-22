@@ -511,7 +511,7 @@ const Gallery = () => {
 
         <div>
           <h3 className="text-2xl sm:text-3xl font-display font-black text-slate-900 uppercase tracking-tight mb-6 text-center">Videos</h3>
-          <p className="text-slate-500 text-center mb-8">Reproduccion automatica en silencio. Grilla 3x2 adaptable.</p>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {videos.filter((v) => v.url).map((video, i) => {
               const embedUrl = toEmbedUrl(video.url);
