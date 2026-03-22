@@ -95,7 +95,7 @@ const Navbar = () => {
     <>
       <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled || isMobileMenuOpen ? 'glass py-3 shadow-xl shadow-slate-900/5' : 'bg-transparent py-5 md:py-8'}`}>
         <div className="container mx-auto px-4 sm:px-6 flex justify-between items-center">
-          <a href="#inicio" aria-label="Ir al inicio de JAH SURF Peru" title="JAH SURF Peru" className="brand-liquid group inline-flex items-center rounded-2xl px-3.5 py-2.5 transition-all duration-300 hover:scale-[1.02]">
+          <a href="#inicio" aria-label="Ir al inicio de JAH SURF Peru" title="JAH SURF Peru" className="px-3.5 py-2.5 transition-all duration-300 hover:scale-[1.02]">
             <Logo size="sm" shape="circle" />
           </a>
 
