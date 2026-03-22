@@ -871,10 +871,11 @@ const Pricing = () => {
       color: "primary",
       desc: "Aprende con amigos o conoce gente nueva en un ambiente dinámico.",
       packages: [
-        { name: "1 Clase x Semana", desc: "4 clases al mes", price: "S/ 461", perClass: "S/ 115" },
-        { name: "2 Clases x Semana", desc: "8 clases al mes", price: "S/ 835", perClass: "S/ 104" },
-        { name: "3 Clases x Semana", desc: "12 clases al mes", price: "S/ 1181", perClass: "S/ 98" },
-        { name: "Clase Suelta", desc: "Sesión única de prueba", price: "S/ 130", perClass: "S/ 130" },
+        { name: "Clase Suelta", desc: "Sesión única de prueba", price: "S/ 108", perClass: "S/ 108" },
+        { name: "1 Clase x Semana", desc: "4 clases al mes", price: "S/ 360", perClass: "S/ 90" },
+        { name: "2 Clases x Semana", desc: "8 clases al mes", price: "S/ 672", perClass: "S/ 84" },
+        { name: "3 Clases x Semana", desc: "12 clases al mes", price: "S/ 984", perClass: "S/ 82" },
+        { name: "4 Clases x Semana", desc: "16 clases al mes", price: "S/ 1,200", perClass: "S/ 75" },
       ]
     },
     {
@@ -884,10 +885,11 @@ const Pricing = () => {
       color: "secondary",
       desc: "Atención 100% personalizada para perfeccionar tu técnica rápidamente.",
       packages: [
-        { name: "1 Clase x Semana", desc: "4 clases al mes", price: "S/ 691", perClass: "S/ 173" },
-        { name: "2 Clases x Semana", desc: "8 clases al mes", price: "S/ 1267", perClass: "S/ 158" },
-        { name: "3 Clases x Semana", desc: "12 clases al mes", price: "S/ 1728", perClass: "S/ 144" },
-        { name: "Clase Suelta", desc: "Sesión única intensiva", price: "S/ 187", perClass: "S/ 187" },
+        { name: "Clase Suelta", desc: "Sesión única intensiva", price: "S/ 120", perClass: "S/ 120" },
+        { name: "1 Clase x Semana", desc: "4 clases al mes", price: "S/ 420", perClass: "S/ 105" },
+        { name: "2 Clases x Semana", desc: "8 clases al mes", price: "S/ 816", perClass: "S/ 102" },
+        { name: "3 Clases x Semana", desc: "12 clases al mes", price: "S/ 1,152", perClass: "S/ 96" },
+        { name: "4 Clases x Semana", desc: "16 clases al mes", price: "S/ 1,440", perClass: "S/ 90" },
       ]
     },
     {
@@ -897,10 +899,11 @@ const Pricing = () => {
       color: "accent",
       desc: "Mismo costo y mismos paquetes que clases individuales, en modalidad Paddle.",
       packages: [
-        { name: "1 Clase x Semana", desc: "4 clases al mes", price: "S/ 691", perClass: "S/ 173" },
-        { name: "2 Clases x Semana", desc: "8 clases al mes", price: "S/ 1267", perClass: "S/ 158" },
-        { name: "3 Clases x Semana", desc: "12 clases al mes", price: "S/ 1728", perClass: "S/ 144" },
-        { name: "Clase Suelta", desc: "Sesión única intensiva", price: "S/ 187", perClass: "S/ 187" },
+        { name: "Clase Suelta", desc: "Sesión única intensiva", price: "S/ 120", perClass: "S/ 120" },
+        { name: "1 Clase x Semana", desc: "4 clases al mes", price: "S/ 420", perClass: "S/ 105" },
+        { name: "2 Clases x Semana", desc: "8 clases al mes", price: "S/ 816", perClass: "S/ 102" },
+        { name: "3 Clases x Semana", desc: "12 clases al mes", price: "S/ 1,152", perClass: "S/ 96" },
+        { name: "4 Clases x Semana", desc: "16 clases al mes", price: "S/ 1,440", perClass: "S/ 90" },
       ]
     },
     {
@@ -910,10 +913,10 @@ const Pricing = () => {
       color: "accent",
       desc: "Experiencias grupales, viajes y eventos diseñados para la comunidad.",
       packages: [
-        { name: "Paseos de Surf", desc: "Día completo en otras playas", price: "Desde S/ 288" },
-        { name: "Surf Camps", desc: "Fin de semana inmersivo", price: "Consultar" },
-        { name: "Eventos Corporativos", desc: "Team building en el mar", price: "Consultar" },
-        { name: "Alquiler de Equipo", desc: "Tabla + Wetsuit (2h)", price: "S/ 72" },
+        { name: "Paseos en Paddle", desc: "Paseo grupal de 2 horas", price: "S/ 120" },
+        { name: "Surf Camps", desc: "Fin de semana inmersivo (Vie–Dom)", price: "S/ 816" },
+        { name: "Eventos Corporativos", desc: "Team building en el mar", price: "S/ 816" },
+        { name: "Alquiler de Equipo", desc: "Tabla + Wetsuit (2h)", price: "S/ 86" },
       ]
     }
   ];
