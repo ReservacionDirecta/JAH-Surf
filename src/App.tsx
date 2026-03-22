@@ -5,9 +5,9 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider } from './AuthProvider';
 
 import { BookingForm } from './components/BookingForm';
-import { BrandName } from './components/BrandName';
 import { AdminPanel } from './components/AdminPanel';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { Logo } from './components/logo';
 
 // --- Components ---
 
@@ -95,10 +95,8 @@ const Navbar = () => {
     <>
       <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled || isMobileMenuOpen ? 'glass py-3 shadow-xl shadow-slate-900/5' : 'bg-transparent py-5 md:py-8'}`}>
         <div className="container mx-auto px-4 sm:px-6 flex justify-between items-center">
-          <a href="#inicio" className="brand-liquid group inline-flex items-center rounded-2xl px-3.5 py-2.5 transition-all duration-300 hover:scale-[1.02]">
-            <BrandName 
-              className="text-xl sm:text-2xl text-white" 
-            />
+          <a href="#inicio" aria-label="Ir al inicio de JAH SURF Peru" title="JAH SURF Peru" className="brand-liquid group inline-flex items-center rounded-2xl px-3.5 py-2.5 transition-all duration-300 hover:scale-[1.02]">
+            <Logo size="sm" shape="circle" className="w-12 h-12 text-[11px]" />
           </a>
 
           {/* Desktop Menu */}
@@ -382,7 +380,10 @@ const About = () => {
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                   <Waves className="text-primary w-5 h-5" />
                 </div>
-                <p className="font-black text-primary uppercase tracking-widest text-sm"><BrandName /> Team</p>
+                <div className="flex items-center gap-3">
+                  <Logo size="sm" shape="circle" className="w-10 h-10 text-[10px] shadow-none" />
+                  <p className="font-black text-primary uppercase tracking-widest text-sm">Team</p>
+                </div>
               </div>
             </div>
             <div className="absolute -top-10 -right-10 w-56 h-56 bg-[radial-gradient(circle,rgba(16,185,129,0.12),transparent_68%)] -z-10"></div>
@@ -1082,6 +1083,26 @@ const Contact = () => {
                 <MessageCircle size={28} />
               </a>
             </div>
+
+            <div className="mt-10 md:mt-12 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-xl shadow-slate-900/5">
+              <div className="flex items-center justify-between gap-4 border-b border-slate-200 px-6 py-5">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">Ubicación</p>
+                  <p className="text-lg font-black uppercase tracking-tight text-slate-900">Encuéntranos en San Bartolo</p>
+                </div>
+                <MapPin className="text-primary" size={24} />
+              </div>
+              <div className="aspect-[4/3] w-full bg-slate-100">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4622.527787989284!2d-76.78220069999999!3d-12.387749699999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x91059f2985df96ad%3A0xc5b3e103ebd1f9e7!2sJAH%20Surf!5e1!3m2!1ses!2spe!4v1774210089533!5m2!1ses!2spe"
+                  className="h-full w-full border-0"
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Mapa de JAH SURF en San Bartolo"
+                />
+              </div>
+            </div>
           </motion.div>
 
           <motion.div
@@ -1131,12 +1152,12 @@ const Footer = () => {
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-8 md:gap-12">
           <div className="flex items-center gap-3">
-            <BrandName className="text-white text-2xl" /> <span className="text-accent text-2xl font-display font-black uppercase tracking-tighter">Peru</span>
+            <Logo size="sm" shape="circle" className="w-12 h-12 text-[11px]" /> <span className="text-accent text-2xl font-display font-black uppercase tracking-tighter">Peru</span>
           </div>
           
           <div className="text-center md:text-left">
             <p className="text-white/70 text-sm font-medium">
-              © 2026 <BrandName /> Peru. Todos los derechos reservados.
+              © 2026 JAH SURF Peru. Todos los derechos reservados.
             </p>
             <p className="text-white/60 text-[10px] uppercase font-black tracking-[0.2em] mt-2">
               Desarrollado por <a href="https://www.miraescuchahablaconamor.com" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-primary transition-colors">miraescuchahablaconamor.com</a>
