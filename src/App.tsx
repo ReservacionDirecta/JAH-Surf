@@ -56,6 +56,17 @@ const Navbar = () => {
     };
   }, [isMobileMenuOpen]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const handleMobileNavigate = (href: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     setIsMobileMenuOpen(false);
@@ -93,19 +104,19 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled || isMobileMenuOpen ? 'glass py-3 shadow-xl shadow-slate-900/5' : 'bg-transparent py-5 md:py-8'}`}>
-        <div className="container mx-auto px-4 sm:px-6 flex justify-between items-center">
+      <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled || isMobileMenuOpen ? 'glass py-3 shadow-xl shadow-slate-900/5' : 'bg-transparent py-4 sm:py-5 lg:py-8'}`}>
+        <div className="container mx-auto flex items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <a href="#inicio" aria-label="Ir al inicio de JAH SURF Peru" title="JAH SURF Peru" className="px-3.5 py-2.5 transition-all duration-300 hover:scale-[1.02]">
             <Logo size="sm" shape="circle" />
           </a>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-7 lg:gap-10">
+          <div className="hidden lg:flex items-center gap-5 xl:gap-8 2xl:gap-10">
             {navLinks.map((link) => (
               <a
                 key={link.name}
                 href={link.href}
-                className={`text-xs font-black uppercase tracking-[0.16em] transition-all hover:text-secondary relative group ${
+                className={`relative group text-[11px] xl:text-xs font-black uppercase tracking-[0.12em] xl:tracking-[0.16em] transition-all hover:text-secondary ${
                   activeSection === link.id 
                     ? 'text-secondary' 
                     : isScrolled ? 'text-slate-800' : 'text-white/85'
@@ -119,7 +130,7 @@ const Navbar = () => {
               href="https://wa.me/51952641118" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="bg-primary hover:bg-primary/90 text-white px-7 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/20"
+              className="bg-primary hover:bg-primary/90 text-white px-5 xl:px-7 py-3 xl:py-3.5 rounded-2xl text-[11px] xl:text-xs font-black uppercase tracking-[0.18em] xl:tracking-widest transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/20"
             >
               RESERVAR
             </a>
@@ -128,7 +139,7 @@ const Navbar = () => {
           {/* Mobile Toggle */}
           <button 
             aria-label={isMobileMenuOpen ? 'Cerrar menu' : 'Abrir menu'}
-            className={`md:hidden p-3 rounded-2xl transition-colors ${isScrolled || isMobileMenuOpen ? 'bg-slate-100 text-slate-900' : 'bg-white/10 text-white'}`}
+            className={`shrink-0 lg:hidden p-3 rounded-2xl transition-colors ${isScrolled || isMobileMenuOpen ? 'bg-slate-100 text-slate-900' : 'bg-white/10 text-white'}`}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -144,7 +155,7 @@ const Navbar = () => {
             animate={{ opacity: 1 }}
             exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
             transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: 'easeOut' }}
-            className="fixed inset-0 z-[9999] md:hidden overflow-y-auto bg-slate-950"
+            className="fixed inset-0 z-[9999] lg:hidden overflow-y-auto bg-slate-950"
           >
             <motion.button 
               aria-label="Cerrar menu"
@@ -243,10 +254,10 @@ const Hero = () => {
           animate={prefersReducedMotion ? undefined : { opacity: 1, scale: 1 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
         >
-          <span className="inline-block px-4 py-1.5 glass text-white text-[10px] sm:text-xs font-black uppercase tracking-[0.26em] mb-6 sm:mb-8 rounded-full">
+          <span className="inline-block px-4 py-1.5 glass text-blue text-[10px] sm:text-xs font-black uppercase tracking-[0.26em] mb-6 sm:mb-8 rounded-full">
             San Bartolo, Perú
           </span>
-          <h1 className="text-4xl sm:text-6xl md:text-8xl lg:text-[10rem] font-display font-black text-white mb-6 sm:mb-8 leading-[0.86] uppercase tracking-tighter">
+          <h1 className="text-4xl sm:text-8xl md:text-8xl lg:text-[10rem] font-display font-black text-white mb-6 sm:mb-8 leading-[0.86] uppercase tracking-tighter">
             {(content.heroTitle || "JAH SURF").trim().toUpperCase() === "JAH SURF" ? (
               <>
                 <span className="text-red-500">J</span>

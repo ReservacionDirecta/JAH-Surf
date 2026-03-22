@@ -12,10 +12,10 @@ export const Logo: React.FC<LogoProps> = ({
   className = ''
 }) => {
   const sizeClasses = {
-    sm: 'w-[4.08rem] h-[4.08rem] text-[15px]',
-    md: 'w-16 h-16 text-[14px]',
-    lg: 'w-32 h-32 text-[28px]',
-    xl: 'w-64 h-64 text-[56px]',
+    sm: 'w-[4.08rem] h-[4.08rem] text-[18px]',
+    md: 'w-16 h-16 text-[17px]',
+    lg: 'w-32 h-32 text-[34px]',
+    xl: 'w-64 h-64 text-[67px]',
   };
 
   const shapeClasses = {
