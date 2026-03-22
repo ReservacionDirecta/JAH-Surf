@@ -415,27 +415,41 @@ const Gallery = () => {
 
     const safeUrl = rawUrl.trim();
 
-    const ytWatch = safeUrl.match(/(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{6,})/i);
-    if (ytWatch) {
-      return `https://www.youtube.com/embed/${ytWatch[1]}?autoplay=1&mute=1&loop=1&playlist=${ytWatch[1]}&controls=0&modestbranding=1&rel=0&playsinline=1`;
+    const buildYouTubeEmbedUrl = (videoId: string) => (
+      `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&rel=0&playsinline=1`
+    );
+
+    try {
+      const parsedUrl = new URL(safeUrl);
+      const host = parsedUrl.hostname.replace(/^www\./i, '').toLowerCase();
+      const pathParts = parsedUrl.pathname.split('/').filter(Boolean);
+
+      if (host === 'youtu.be' && pathParts[0]) {
+        return buildYouTubeEmbedUrl(pathParts[0]);
+      }
+
+      if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com') {
+        const videoIdFromQuery = parsedUrl.searchParams.get('v');
+        if (parsedUrl.pathname === '/watch' && videoIdFromQuery) {
+          return buildYouTubeEmbedUrl(videoIdFromQuery);
+        }
+
+        if ((pathParts[0] === 'embed' || pathParts[0] === 'shorts' || pathParts[0] === 'live') && pathParts[1]) {
+          return buildYouTubeEmbedUrl(pathParts[1]);
+        }
+      }
+
+      if (host === 'vimeo.com' && pathParts[0]) {
+        return `https://player.vimeo.com/video/${pathParts[0]}?autoplay=1&muted=1&loop=1&autopause=0&background=1`;
+      }
+    } catch {
+      const fallbackVideoId = safeUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([a-zA-Z0-9_-]{6,})/i)?.[1];
+      if (fallbackVideoId) {
+        return buildYouTubeEmbedUrl(fallbackVideoId);
+      }
     }
 
-    const ytShort = safeUrl.match(/(?:youtu\.be\/)([a-zA-Z0-9_-]{6,})/i);
-    if (ytShort) {
-      return `https://www.youtube.com/embed/${ytShort[1]}?autoplay=1&mute=1&loop=1&playlist=${ytShort[1]}&controls=0&modestbranding=1&rel=0&playsinline=1`;
-    }
-
-    const ytEmbed = safeUrl.match(/(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{6,})/i);
-    if (ytEmbed) {
-      return `https://www.youtube.com/embed/${ytEmbed[1]}?autoplay=1&mute=1&loop=1&playlist=${ytEmbed[1]}&controls=0&modestbranding=1&rel=0&playsinline=1`;
-    }
-
-    const vimeo = safeUrl.match(/vimeo\.com\/(\d{6,})/i);
-    if (vimeo) {
-      return `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1&muted=1&loop=1&autopause=0&background=1`;
-    }
-
-    return safeUrl;
+    return '';
   };
 
   useEffect(() => {
@@ -499,18 +513,40 @@ const Gallery = () => {
           <h3 className="text-2xl sm:text-3xl font-display font-black text-slate-900 uppercase tracking-tight mb-6 text-center">Videos</h3>
           <p className="text-slate-500 text-center mb-8">Reproduccion automatica en silencio. Grilla 3x2 adaptable.</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-            {videos.filter((v) => v.url).map((video, i) => (
-              <div key={video.id || `video-${i}`} className="rounded-3xl overflow-hidden shadow-lg bg-slate-900 aspect-video">
-                <iframe
-                  src={toEmbedUrl(video.url)}
-                  title={video.title || `Video ${i + 1}`}
-                  className="w-full h-full"
-                  loading="lazy"
-                  allow="autoplay; encrypted-media; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            ))}
+            {videos.filter((v) => v.url).map((video, i) => {
+              const embedUrl = toEmbedUrl(video.url);
+
+              if (!embedUrl) {
+                return (
+                  <div key={video.id || `video-${i}`} className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center shadow-lg">
+                    <p className="text-sm font-black uppercase tracking-[0.16em] text-slate-900">Video no compatible</p>
+                    <p className="mt-3 text-sm text-slate-500">Usa un enlace de YouTube o Vimeo compatible con formato embed.</p>
+                    <a
+                      href={video.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-4 inline-flex rounded-2xl bg-slate-900 px-5 py-3 text-xs font-black uppercase tracking-[0.16em] text-white"
+                    >
+                      Abrir enlace
+                    </a>
+                  </div>
+                );
+              }
+
+              return (
+                <div key={video.id || `video-${i}`} className="rounded-3xl overflow-hidden shadow-lg bg-slate-900 aspect-video">
+                  <iframe
+                    src={embedUrl}
+                    title={video.title || `Video ${i + 1}`}
+                    className="w-full h-full"
+                    loading="lazy"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                    allowFullScreen
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
