@@ -188,6 +188,10 @@ export const AdminPanel = () => {
     const sanitizedVideoLinks = (content.videoLinks || []).map((item: VideoItem) => ({
       ...item,
       url: normalizeVideoUrl(item.url),
+      orientation:
+        item.orientation && item.orientation !== "auto"
+          ? item.orientation
+          : getVideoOrientation(item, item.url),
     }));
 
     saveByKey(
@@ -390,7 +394,7 @@ export const AdminPanel = () => {
     } catch {
       const fallbackVideoId = safeUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([a-zA-Z0-9_-]{6,})/i)?.[1];
       if (fallbackVideoId) {
-        return buildYouTubeEmbedUrl(fallbackVideoId);
+        return buildYouTubeEmbedUrl(fallbackVideoId, /shorts\//i.test(safeUrl));
       }
     }
 
@@ -854,7 +858,19 @@ export const AdminPanel = () => {
                     <input
                       value={video.url}
                       onChange={(e) => updateVideoItem(video.id, { url: e.target.value })}
-                      onBlur={(e) => updateVideoItem(video.id, { url: normalizeVideoUrl(e.target.value) })}
+                      onBlur={(e) => {
+                        const normalizedUrl = normalizeVideoUrl(e.target.value);
+                        const nextPatch: Partial<VideoItem> = { url: normalizedUrl };
+
+                        if (!video.orientation || video.orientation === "auto") {
+                          nextPatch.orientation = getVideoOrientation(
+                            { ...video, url: e.target.value },
+                            normalizedUrl,
+                          ) as VideoItem["orientation"];
+                        }
+
+                        updateVideoItem(video.id, nextPatch);
+                      }}
                       placeholder="https://youtube.com/watch?v=..."
                       className="w-full border rounded-lg px-3 py-2"
                     />

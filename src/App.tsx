@@ -459,7 +459,7 @@ const Gallery = () => {
     } catch {
       const fallbackVideoId = safeUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([a-zA-Z0-9_-]{6,})/i)?.[1];
       if (fallbackVideoId) {
-        return buildYouTubeEmbedUrl(fallbackVideoId);
+        return buildYouTubeEmbedUrl(fallbackVideoId, /shorts\//i.test(safeUrl));
       }
     }
 
