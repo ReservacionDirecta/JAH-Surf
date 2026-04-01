@@ -187,11 +187,18 @@ export const AdminPanel = () => {
   const saveContent = () => {
     const sanitizedVideoLinks = (content.videoLinks || []).map((item: VideoItem) => ({
       ...item,
-      url: normalizeVideoUrl(item.url),
-      orientation:
-        item.orientation && item.orientation !== "auto"
-          ? item.orientation
-          : getVideoOrientation(item, item.url),
+      ...(() => {
+        const normalizedUrl = normalizeVideoUrl(item.url);
+        const resolvedOrientation =
+          item.orientation && item.orientation !== "auto"
+            ? item.orientation
+            : getVideoOrientation(item, normalizedUrl);
+
+        return {
+          url: ensureShortsEmbedParam(normalizedUrl, resolvedOrientation === "portrait"),
+          orientation: resolvedOrientation,
+        };
+      })(),
     }));
 
     saveByKey(
@@ -353,6 +360,35 @@ export const AdminPanel = () => {
 
   const buildYouTubeEmbedUrl = (videoId: string, isShort = false): string => `https://www.youtube-nocookie.com/embed/${videoId}${isShort ? '?shorts=1' : ''}`;
 
+  const ensureShortsEmbedParam = (url: string, isPortrait: boolean): string => {
+    if (!url) return url;
+
+    try {
+      const parsedUrl = new URL(url);
+      const host = parsedUrl.hostname.replace(/^www\./i, "").toLowerCase();
+      const pathParts = parsedUrl.pathname.split("/").filter(Boolean);
+      const isYouTubeEmbed =
+        (host === "youtube-nocookie.com" || host === "youtube.com" || host === "m.youtube.com") &&
+        pathParts[0] === "embed" &&
+        Boolean(pathParts[1]);
+
+      if (!isYouTubeEmbed) return url;
+
+      if (isPortrait) {
+        parsedUrl.searchParams.set("shorts", "1");
+      } else {
+        parsedUrl.searchParams.delete("shorts");
+      }
+
+      return parsedUrl.toString();
+    } catch {
+      if (isPortrait && /youtube(?:-nocookie)?\.com\/embed\//i.test(url) && !/([?&])shorts=1\b/i.test(url)) {
+        return `${url}${url.includes("?") ? "&" : "?"}shorts=1`;
+      }
+      return url;
+    }
+  };
+
   const getVideoOrientation = (video: VideoItem, embedUrl?: string) => {
     if (video.orientation === "portrait") return "portrait";
     if (video.orientation === "landscape") return "landscape";
@@ -380,11 +416,12 @@ export const AdminPanel = () => {
       if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com') {
         const videoIdFromQuery = parsedUrl.searchParams.get('v');
         if (parsedUrl.pathname === '/watch' && videoIdFromQuery) {
-          return buildYouTubeEmbedUrl(videoIdFromQuery);
+          return buildYouTubeEmbedUrl(videoIdFromQuery, parsedUrl.searchParams.get('shorts') === '1');
         }
 
         if ((pathParts[0] === 'embed' || pathParts[0] === 'shorts' || pathParts[0] === 'live') && pathParts[1]) {
-          return buildYouTubeEmbedUrl(pathParts[1], pathParts[0] === 'shorts');
+          const isShort = pathParts[0] === 'shorts' || parsedUrl.searchParams.get('shorts') === '1';
+          return buildYouTubeEmbedUrl(pathParts[1], isShort);
         }
       }
 
@@ -863,10 +900,14 @@ export const AdminPanel = () => {
                         const nextPatch: Partial<VideoItem> = { url: normalizedUrl };
 
                         if (!video.orientation || video.orientation === "auto") {
-                          nextPatch.orientation = getVideoOrientation(
+                          const autoOrientation = getVideoOrientation(
                             { ...video, url: e.target.value },
                             normalizedUrl,
                           ) as VideoItem["orientation"];
+                          nextPatch.orientation = autoOrientation;
+                          nextPatch.url = ensureShortsEmbedParam(normalizedUrl, autoOrientation === "portrait");
+                        } else {
+                          nextPatch.url = ensureShortsEmbedParam(normalizedUrl, video.orientation === "portrait");
                         }
 
                         updateVideoItem(video.id, nextPatch);
