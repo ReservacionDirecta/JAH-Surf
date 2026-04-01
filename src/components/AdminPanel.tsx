@@ -29,6 +29,7 @@ type VideoItem = {
   id: string;
   url: string;
   title?: string;
+  orientation?: "auto" | "portrait" | "landscape";
 };
 
 type ContentListKey = "galleryImages" | "experienceImages" | "videoLinks";
@@ -348,9 +349,15 @@ export const AdminPanel = () => {
 
   const buildYouTubeEmbedUrl = (videoId: string, isShort = false): string => `https://www.youtube-nocookie.com/embed/${videoId}${isShort ? '?shorts=1' : ''}`;
 
-  const isPortraitVideoUrl = (rawUrl: string, embedUrl?: string) => {
-    const source = `${rawUrl || ''} ${embedUrl || ''}`.toLowerCase();
-    return source.includes('/shorts/') || source.includes('shorts=1');
+  const getVideoOrientation = (video: VideoItem, embedUrl?: string) => {
+    if (video.orientation === "portrait") return "portrait";
+    if (video.orientation === "landscape") return "landscape";
+
+    const source = `${video.url || ""} ${embedUrl || ""} ${video.title || ""}`.toLowerCase();
+    const portraitHints = ["shorts", "/short/", "vertical", "reel", "#short", "#shorts"];
+    const hasPortraitHint = portraitHints.some((hint) => source.includes(hint));
+
+    return hasPortraitHint ? "portrait" : "landscape";
   };
 
   const getVideoEmbedUrl = (url: string): string => {
@@ -401,7 +408,7 @@ export const AdminPanel = () => {
     const list = (content.videoLinks || []) as VideoItem[];
     setContent({
       ...content,
-      videoLinks: [...list, { id: `v-${Date.now()}`, url: "", title: "" }],
+      videoLinks: [...list, { id: `v-${Date.now()}`, url: "", title: "", orientation: "auto" }],
     });
   };
 
@@ -820,7 +827,7 @@ export const AdminPanel = () => {
 
               {(content.videoLinks || []).map((video: VideoItem, index: number, list: VideoItem[]) => {
                 const previewUrl = getVideoEmbedUrl(video.url);
-                const isPortraitVideo = isPortraitVideoUrl(video.url, previewUrl);
+                const isPortraitVideo = getVideoOrientation(video, previewUrl) === "portrait";
 
                 return (
                   <div
@@ -851,6 +858,16 @@ export const AdminPanel = () => {
                       placeholder="https://youtube.com/watch?v=..."
                       className="w-full border rounded-lg px-3 py-2"
                     />
+                    <label className="block text-xs font-black uppercase tracking-wider">Formato del video</label>
+                    <select
+                      value={video.orientation || "auto"}
+                      onChange={(e) => updateVideoItem(video.id, { orientation: e.target.value as VideoItem["orientation"] })}
+                      className="w-full border rounded-lg px-3 py-2 bg-white"
+                    >
+                      <option value="auto">Auto (detectar)</option>
+                      <option value="portrait">Vertical (Shorts/Reels)</option>
+                      <option value="landscape">Horizontal</option>
+                    </select>
                     {video.url && previewUrl && (
                       <div className="flex justify-center">
                         <div className={`rounded-lg overflow-hidden border bg-slate-100 ${isPortraitVideo ? 'w-full max-w-[12rem] sm:max-w-[14rem] md:max-w-[16rem] lg:max-w-[18rem] aspect-[9/16]' : 'w-full max-w-[20rem] sm:max-w-[24rem] md:max-w-[30rem] lg:max-w-[36rem] aspect-video'}`}>

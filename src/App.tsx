@@ -408,11 +408,20 @@ const About = () => {
 const Gallery = () => {
   const [experiencePhotos, setExperiencePhotos] = useState<{ src: string; alt: string }[]>([]);
   const [galleryPhotos, setGalleryPhotos] = useState<{ src: string; alt: string }[]>([]);
-  const [videos, setVideos] = useState<{ id: string; url: string; title?: string }[]>([]);
+  const [videos, setVideos] = useState<{ id: string; url: string; title?: string; orientation?: 'auto' | 'portrait' | 'landscape' }[]>([]);
 
-  const isPortraitVideoUrl = (rawUrl: string, embedUrl?: string) => {
-    const source = `${rawUrl || ''} ${embedUrl || ''}`.toLowerCase();
-    return source.includes('/shorts/') || source.includes('shorts=1');
+  const getVideoOrientation = (
+    video: { url: string; title?: string; orientation?: 'auto' | 'portrait' | 'landscape' },
+    embedUrl?: string,
+  ) => {
+    if (video.orientation === 'portrait') return 'portrait';
+    if (video.orientation === 'landscape') return 'landscape';
+
+    const source = `${video.url || ''} ${embedUrl || ''} ${video.title || ''}`.toLowerCase();
+    const portraitHints = ['shorts', '/short/', 'vertical', 'reel', '#short', '#shorts'];
+    const hasPortraitHint = portraitHints.some((hint) => source.includes(hint));
+
+    return hasPortraitHint ? 'portrait' : 'landscape';
   };
 
   const toEmbedUrl = (rawUrl: string) => {
@@ -517,14 +526,15 @@ const Gallery = () => {
         <div>
           <h3 className="text-2xl sm:text-3xl font-display font-black text-slate-900 uppercase tracking-tight mb-6 text-center">Videos</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+          <div className="columns-1 md:columns-2 xl:columns-3 gap-5 md:gap-6 [column-fill:_balance]">
             {videos.filter((v) => v.url).map((video, i) => {
               const embedUrl = toEmbedUrl(video.url);
-              const isPortraitVideo = isPortraitVideoUrl(video.url, embedUrl);
+              const orientation = getVideoOrientation(video, embedUrl);
+              const isPortraitVideo = orientation === 'portrait';
 
               if (!embedUrl) {
                 return (
-                  <div key={video.id || `video-${i}`} className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center shadow-lg">
+                  <div key={video.id || `video-${i}`} className="mb-5 md:mb-6 break-inside-avoid rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center shadow-lg">
                     <p className="text-sm font-black uppercase tracking-[0.16em] text-slate-900">Video no compatible</p>
                     <p className="mt-3 text-sm text-slate-500">Usa un enlace de YouTube o Vimeo compatible con formato embed.</p>
                     <a
@@ -540,12 +550,12 @@ const Gallery = () => {
               }
 
               return (
-                <div key={video.id || `video-${i}`} className="flex justify-center">
-                  <div className={`rounded-3xl overflow-hidden shadow-lg bg-slate-900 ${isPortraitVideo ? 'w-full max-w-[14rem] sm:max-w-[16rem] md:max-w-[18rem] lg:max-w-[20rem] aspect-[9/16]' : 'w-full max-w-[20rem] sm:max-w-[26rem] md:max-w-[32rem] lg:max-w-[38rem] aspect-video'}`}>
+                <div key={video.id || `video-${i}`} className="mb-5 md:mb-6 break-inside-avoid">
+                  <div className={`relative rounded-3xl overflow-hidden shadow-lg bg-slate-900 ${isPortraitVideo ? 'w-full max-w-[26rem] mx-auto aspect-[9/16]' : 'w-full aspect-video'}`}>
                     <iframe
                       src={embedUrl}
                       title={video.title || `Video ${i + 1}`}
-                      className="w-full h-full"
+                      className={isPortraitVideo ? 'absolute inset-0 h-full w-full' : 'w-full h-full'}
                       loading="lazy"
                       referrerPolicy="strict-origin-when-cross-origin"
                       allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
