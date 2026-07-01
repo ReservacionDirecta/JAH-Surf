@@ -196,6 +196,14 @@
   background: linear-gradient(90deg, transparent 0%, rgb(15 23 42 / var(--divider-soft, 0.12)) 12%, rgb(15 23 42 / var(--divider-strong, 0.2)) 50%, rgb(15 23 42 / var(--divider-soft, 0.12)) 88%, transparent 100%);
 }
 
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 @media (max-width: 640px) {
   .custom-scrollbar::-webkit-scrollbar {
     width: 4px;

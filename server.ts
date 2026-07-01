@@ -1,5 +1,4 @@
-// @ts-nocheck
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import { createServer as createViteServer } from "vite";
 import fs from "fs";
 import path from "path";

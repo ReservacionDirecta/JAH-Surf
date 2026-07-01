@@ -3,6 +3,8 @@ import { Menu, X, Waves, Instagram, Facebook, MessageCircle, MapPin, Clock, Mail
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider } from './AuthProvider';
+import { formatLatinDateInput, parseLatinDate } from './utils/date';
+import { PRICE_TABLES } from './constants';
 
 import { BookingForm } from './components/BookingForm';
 import { AdminPanel } from './components/AdminPanel';
@@ -276,6 +278,20 @@ const Hero = () => {
               CONÓCENOS
             </a>
           </div>
+          <div className="flex items-center justify-center gap-6 mt-10 sm:mt-12">
+            <div className="flex items-center gap-2 glass px-4 py-2 rounded-full">
+              <div className="flex -space-x-2">
+                {[0,1,2,3].map(i => (
+                  <div key={i} className="w-7 h-7 rounded-full border-2 border-white/30 bg-gradient-to-br from-primary/60 to-secondary/60" />
+                ))}
+              </div>
+              <span className="text-white/80 text-xs font-bold ml-1">+500 alumnos</span>
+            </div>
+            <div className="flex items-center gap-1 glass px-4 py-2 rounded-full">
+              <span className="text-secondary text-sm">★★★★★</span>
+              <span className="text-white/80 text-xs font-bold">4.9</span>
+            </div>
+          </div>
         </motion.div>
       </div>
       
@@ -472,36 +488,57 @@ const Gallery = () => {
           Galeria <span className="text-primary">Multimedia</span>
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 mb-12">
-          {galleryPhotos.filter((p) => p.src).map((photo, i) => (
-            <motion.div
-              key={`gallery-${i}`}
-              whileHover={{ scale: 1.03 }}
-              className="rounded-3xl overflow-hidden shadow-lg bg-white"
-            >
-              <img src={photo.src} alt={photo.alt || 'Galeria'} className="w-full h-64 object-cover" loading="lazy" decoding="async" referrerPolicy="no-referrer" />
-            </motion.div>
-          ))}
-        </div>
-
-        <div>
-          <h3 className="text-2xl sm:text-3xl font-display font-black text-slate-900 uppercase tracking-tight mb-6 text-center">Videos</h3>
-          <p className="text-slate-500 text-center mb-8">Reproduccion automatica en silencio. Grilla 3x2 adaptable.</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-            {videos.filter((v) => v.url).map((video, i) => (
-              <div key={video.id || `video-${i}`} className="rounded-3xl overflow-hidden shadow-lg bg-slate-900 aspect-video">
-                <iframe
-                  src={toEmbedUrl(video.url)}
-                  title={video.title || `Video ${i + 1}`}
-                  className="w-full h-full"
-                  loading="lazy"
-                  allow="autoplay; encrypted-media; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
+        {galleryPhotos.filter((p) => p.src).length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 mb-14">
+            {galleryPhotos.filter((p) => p.src).map((photo, i) => (
+              <motion.div
+                key={`gallery-${i}`}
+                whileHover={{ scale: 1.03 }}
+                className="rounded-3xl overflow-hidden shadow-lg bg-white"
+              >
+                <img src={photo.src} alt={photo.alt || 'Galeria'} className="w-full h-64 object-cover" loading="lazy" decoding="async" referrerPolicy="no-referrer" />
+              </motion.div>
             ))}
           </div>
-        </div>
+        )}
+
+        {videos.filter((v) => v.url).length > 0 && (
+          <div>
+            <div className="flex items-center gap-4 mb-3">
+              <div className="w-12 h-px bg-primary"></div>
+              <span className="text-primary font-black uppercase tracking-[0.2em] text-xs">Shorts</span>
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-display font-black text-slate-900 uppercase tracking-tight mb-2">Videos</h3>
+            <p className="text-slate-500 mb-8 font-medium">Desliza para explorar. Reproduccion automatica en silencio.</p>
+            <div className="relative">
+              <div className="flex gap-4 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 sm:-mx-6 sm:px-6">
+                {videos.filter((v) => v.url).map((video, i) => (
+                  <div
+                    key={video.id || `video-${i}`}
+                    className="flex-shrink-0 snap-center w-[260px] sm:w-[280px] md:w-[300px]"
+                  >
+                    <div className="rounded-[2rem] overflow-hidden shadow-xl bg-slate-900 aspect-[9/16] relative group">
+                      <iframe
+                        src={toEmbedUrl(video.url)}
+                        title={video.title || `Video ${i + 1}`}
+                        className="absolute inset-0 w-full h-full"
+                        loading="lazy"
+                        allow="autoplay; encrypted-media; picture-in-picture"
+                        allowFullScreen
+                      />
+                      <div className="absolute inset-0 rounded-[2rem] ring-1 ring-inset ring-white/10 pointer-events-none" />
+                    </div>
+                    {video.title && (
+                      <p className="mt-3 text-sm font-bold text-slate-700 text-center px-2 truncate">{video.title}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-paper to-transparent pointer-events-none z-10 hidden sm:block" style={{ background: 'linear-gradient(to left, #fdfcf9, transparent)' }} />
+              <div className="absolute top-0 left-0 w-16 h-full bg-gradient-to-r from-paper to-transparent pointer-events-none z-10 hidden sm:block" style={{ background: 'linear-gradient(to right, #fdfcf9, transparent)' }} />
+            </div>
+          </div>
+        )}
       </div>
     </section>
     </>
@@ -577,6 +614,64 @@ const Equipment = () => {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const Testimonials = () => {
+  const testimonials = [
+    {
+      name: "Carlos M.",
+      text: "Mi primera vez en surf y fue increíble. Los instructores son muy pacientes y te hacen sentir seguro desde el primer minuto. ¡Volví 3 veces más!",
+      rating: 5,
+    },
+    {
+      name: "Ana L.",
+      text: "Llevo 2 meses en clases grupales y ya puedo pararme en la tabla. El ambiente es genial, es como una familia. Súper recomendado.",
+      rating: 5,
+    },
+    {
+      name: "Miguel R.",
+      text: "Hice un surf camp con amigos y fue la mejor experiencia de nuestro viaje a Lima. Todo perfecto, las tablas, los wetsuits, la ubicación.",
+      rating: 5,
+    },
+  ];
+
+  return (
+    <section className="py-20 md:py-28 section-sand section-divider">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="text-center mb-14 md:mb-20">
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <div className="w-12 h-px bg-primary"></div>
+            <span className="text-primary font-black uppercase tracking-[0.2em] text-xs">Testimonios</span>
+            <div className="w-12 h-px bg-primary"></div>
+          </div>
+          <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-black text-slate-900 mb-6 uppercase tracking-tighter">
+            Lo que dicen <span className="text-primary">nuestros alumnos</span>
+          </h2>
+        </div>
+        <div className="grid md:grid-cols-3 gap-6 md:gap-8">
+          {testimonials.map((t, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.12, duration: 0.6 }}
+              className="glass p-8 md:p-10 rounded-[2rem] relative"
+            >
+              <div className="text-secondary mb-4 text-sm tracking-widest">{'★'.repeat(t.rating)}</div>
+              <p className="text-slate-600 text-base sm:text-lg leading-relaxed font-medium mb-8 italic">"{t.text}"</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
+                  <span className="text-primary font-black text-sm">{t.name.charAt(0)}</span>
+                </div>
+                <span className="font-black text-slate-900 uppercase tracking-tight text-sm">{t.name}</span>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>
@@ -832,37 +927,19 @@ const PricingModal = ({ isOpen, onClose, title, packages, color }) => {
   );
 };
 
-const formatLatinDateInput = (value: string) => {
-  const digits = value.replace(/\D/g, '').slice(0, 8);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-};
-
-const parseLatinDate = (value: string) => {
-  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (!match) return null;
-
-  const [, dayString, monthString, yearString] = match;
-  const day = Number(dayString);
-  const month = Number(monthString);
-  const year = Number(yearString);
-  const parsedDate = new Date(year, month - 1, day);
-
-  if (
-    parsedDate.getFullYear() !== year ||
-    parsedDate.getMonth() !== month - 1 ||
-    parsedDate.getDate() !== day
-  ) {
-    return null;
-  }
-
-  parsedDate.setHours(0, 0, 0, 0);
-  return parsedDate;
-};
-
 const Pricing = () => {
   const [modalData, setModalData] = useState(null);
+
+  const fmtPrice = (n: number) => `S/ ${n.toLocaleString('es-PE')}`;
+  const fmtPerClass = (price: number, classes: number) => `S/ ${Math.round(price / classes)}`;
+
+  const buildPackages = (plans: { name: string; price: number; classesPerMonth?: number }[]) =>
+    plans.map((p) => ({
+      name: p.name,
+      desc: p.classesPerMonth ? `${p.classesPerMonth} clases al mes` : 'Clase individual',
+      price: fmtPrice(p.price),
+      ...(p.classesPerMonth ? { perClass: fmtPerClass(p.price, p.classesPerMonth) } : {}),
+    }));
 
   const pricingCategories = [
     {
@@ -871,13 +948,7 @@ const Pricing = () => {
       icon: <Users className="w-12 h-12" />,
       color: "primary",
       desc: "Aprende con amigos o conoce gente nueva en un ambiente dinámico.",
-      packages: [
-        { name: "Clase Suelta", desc: "Sesión única de prueba", price: "S/ 108", perClass: "S/ 108" },
-        { name: "1 Clase x Semana", desc: "4 clases al mes", price: "S/ 360", perClass: "S/ 90" },
-        { name: "2 Clases x Semana", desc: "8 clases al mes", price: "S/ 672", perClass: "S/ 84" },
-        { name: "3 Clases x Semana", desc: "12 clases al mes", price: "S/ 984", perClass: "S/ 82" },
-        { name: "4 Clases x Semana", desc: "16 clases al mes", price: "S/ 1,200", perClass: "S/ 75" },
-      ]
+      packages: buildPackages(PRICE_TABLES.grupales),
     },
     {
       id: 'individuales',
@@ -885,13 +956,7 @@ const Pricing = () => {
       icon: <Zap className="w-12 h-12" />,
       color: "secondary",
       desc: "Atención 100% personalizada para perfeccionar tu técnica rápidamente.",
-      packages: [
-        { name: "Clase Suelta", desc: "Sesión única intensiva", price: "S/ 120", perClass: "S/ 120" },
-        { name: "1 Clase x Semana", desc: "4 clases al mes", price: "S/ 420", perClass: "S/ 105" },
-        { name: "2 Clases x Semana", desc: "8 clases al mes", price: "S/ 816", perClass: "S/ 102" },
-        { name: "3 Clases x Semana", desc: "12 clases al mes", price: "S/ 1,152", perClass: "S/ 96" },
-        { name: "4 Clases x Semana", desc: "16 clases al mes", price: "S/ 1,440", perClass: "S/ 90" },
-      ]
+      packages: buildPackages(PRICE_TABLES.individuales),
     },
     {
       id: 'paddle',
@@ -899,13 +964,7 @@ const Pricing = () => {
       icon: <Waves className="w-12 h-12" />,
       color: "accent",
       desc: "Mismo costo y mismos paquetes que clases individuales, en modalidad Paddle.",
-      packages: [
-        { name: "Clase Suelta", desc: "Sesión única intensiva", price: "S/ 120", perClass: "S/ 120" },
-        { name: "1 Clase x Semana", desc: "4 clases al mes", price: "S/ 420", perClass: "S/ 105" },
-        { name: "2 Clases x Semana", desc: "8 clases al mes", price: "S/ 816", perClass: "S/ 102" },
-        { name: "3 Clases x Semana", desc: "12 clases al mes", price: "S/ 1,152", perClass: "S/ 96" },
-        { name: "4 Clases x Semana", desc: "16 clases al mes", price: "S/ 1,440", perClass: "S/ 90" },
-      ]
+      packages: buildPackages(PRICE_TABLES.paddle),
     },
     {
       id: 'otras',
@@ -914,12 +973,12 @@ const Pricing = () => {
       color: "accent",
       desc: "Experiencias grupales, viajes y eventos diseñados para la comunidad.",
       packages: [
-        { name: "Paseos en Paddle", desc: "Paseo grupal de 2 horas", price: "S/ 120" },
-        { name: "Surf Camps", desc: "Fin de semana inmersivo (Vie–Dom)", price: "S/ 816" },
-        { name: "Eventos Corporativos", desc: "Team building en el mar", price: "S/ 816" },
-        { name: "Alquiler de Equipo", desc: "Tabla + Wetsuit (2h)", price: "S/ 86" },
-      ]
-    }
+        { name: "Paseos en Paddle", desc: "Paseo grupal de 2 horas", price: fmtPrice(120) },
+        { name: "Surf Camps", desc: "Fin de semana inmersivo (Vie–Dom)", price: fmtPrice(816) },
+        { name: "Eventos Corporativos", desc: "Team building en el mar", price: fmtPrice(816) },
+        { name: "Alquiler de Equipo", desc: "Tabla + Wetsuit (2h)", price: fmtPrice(86) },
+      ],
+    },
   ];
 
   return (
@@ -940,13 +999,18 @@ const Pricing = () => {
         </div>
 
         <div className="grid lg:grid-cols-2 xl:grid-cols-4 gap-6 md:gap-10">
-          {pricingCategories.map((cat) => (
+          {pricingCategories.map((cat, idx) => (
             <motion.div 
               key={cat.id}
               whileHover={{ y: -8 }}
-              className="glass p-8 md:p-12 rounded-[2rem] md:rounded-[3rem] flex flex-col items-center text-center group cursor-pointer transition-all duration-300 hover:shadow-[0_24px_48px_-24px_rgba(0,0,0,0.12)] hover:bg-white/84"
+              className={`glass p-8 md:p-12 rounded-[2rem] md:rounded-[3rem] flex flex-col items-center text-center group cursor-pointer transition-all duration-300 hover:shadow-[0_24px_48px_-24px_rgba(0,0,0,0.12)] hover:bg-white/84 relative ${idx === 0 ? 'ring-2 ring-primary/30' : ''}`}
               onClick={() => setModalData(cat)}
             >
+              {idx === 0 && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/30 whitespace-nowrap">
+                  Más popular
+                </div>
+              )}
               <div className={`bg-white p-8 rounded-[2rem] shadow-sm mb-10 group-hover:scale-110 transition-all duration-500 ${
                 cat.color === 'primary' ? 'text-primary group-hover:bg-primary group-hover:text-white' :
                 cat.color === 'secondary' ? 'text-secondary group-hover:bg-secondary group-hover:text-white' :
@@ -1036,6 +1100,20 @@ const Benefits = () => {
 };
 
 const Contact = () => {
+  const [contactName, setContactName] = useState('');
+  const [contactWhatsapp, setContactWhatsapp] = useState('');
+  const [contactInterest, setContactInterest] = useState('Clases Grupales');
+  const [contactMessage, setContactMessage] = useState('');
+
+  const handleContactSubmit = () => {
+    if (!contactName || !contactMessage) {
+      alert('Por favor, completa tu nombre y el mensaje.');
+      return;
+    }
+    const text = `Hola JAH SURF Peru, me comunico desde su web:\n- Nombre: ${contactName}\n- WhatsApp: ${contactWhatsapp || 'No proporcionado'}\n- Interés: ${contactInterest}\n- Mensaje: ${contactMessage}`;
+    window.open(`https://wa.me/51952641118?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
   return (
     <section id="contacto" className="py-20 md:py-32 section-paper section-divider">
       <div className="container mx-auto px-4 sm:px-6">
@@ -1083,6 +1161,19 @@ const Contact = () => {
                 <MessageCircle size={28} />
               </a>
             </div>
+
+            <div className="mt-10 md:mt-14 rounded-[2rem] overflow-hidden shadow-xl h-64 md:h-80">
+              <iframe
+                src="https://maps.google.com/maps?q=Malecon+Rivera+Norte+636+San+Bartolo+Lima+Peru&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Ubicación JAH SURF Peru - San Bartolo"
+              />
+            </div>
           </motion.div>
 
           <motion.div
@@ -1092,20 +1183,20 @@ const Contact = () => {
             className="glass p-6 sm:p-8 md:p-16 rounded-[2rem] md:rounded-[3.5rem] shadow-2xl shadow-slate-900/5"
           >
             <h3 className="text-2xl sm:text-3xl font-black mb-8 md:mb-10 uppercase tracking-tight">Envíanos un mensaje</h3>
-            <form className="space-y-6 md:space-y-8" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-6 md:space-y-8" onSubmit={(e) => { e.preventDefault(); handleContactSubmit(); }}>
               <div className="grid md:grid-cols-2 gap-5 md:gap-8">
                 <div className="space-y-3">
                   <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em]">Nombre</label>
-                  <input type="text" className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-5 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium" placeholder="Tu nombre" />
+                  <input type="text" value={contactName} onChange={(e) => setContactName(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-5 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium" placeholder="Tu nombre" />
                 </div>
                 <div className="space-y-3">
                   <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em]">WhatsApp</label>
-                  <input type="tel" className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-5 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium" placeholder="Tu número" />
+                  <input type="tel" value={contactWhatsapp} onChange={(e) => setContactWhatsapp(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-5 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium" placeholder="Tu número" />
                 </div>
               </div>
               <div className="space-y-3">
                 <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em]">Interés</label>
-                <select className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-5 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium appearance-none">
+                <select value={contactInterest} onChange={(e) => setContactInterest(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-5 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium appearance-none">
                   <option>Clases Grupales</option>
                   <option>Clases Individuales</option>
                   <option>Eventos / Otros</option>
@@ -1113,9 +1204,9 @@ const Contact = () => {
               </div>
               <div className="space-y-3">
                 <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em]">Mensaje</label>
-                <textarea className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-5 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium h-40 resize-none" placeholder="¿En qué podemos ayudarte?"></textarea>
+                <textarea value={contactMessage} onChange={(e) => setContactMessage(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-5 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium h-40 resize-none" placeholder="¿En qué podemos ayudarte?" />
               </div>
-              <button className="w-full bg-primary text-white py-6 rounded-2xl font-black text-xl hover:bg-primary/90 transition-all shadow-2xl shadow-primary/30 hover:-translate-y-1 active:translate-y-0 uppercase tracking-widest">
+              <button type="submit" className="w-full bg-primary text-white py-6 rounded-2xl font-black text-xl hover:bg-primary/90 transition-all shadow-2xl shadow-primary/30 hover:-translate-y-1 active:translate-y-0 uppercase tracking-widest">
                 ENVIAR MENSAJE
               </button>
             </form>
@@ -1155,6 +1246,29 @@ const Footer = () => {
   );
 };
 
+const FloatingWhatsApp = () => {
+  const prefersReducedMotion = useReducedMotion();
+  return (
+    <motion.a
+      href="https://wa.me/51952641118?text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20las%20clases%20de%20surf"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Contactar por WhatsApp"
+      initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 1.5, duration: 0.4, ease: 'easeOut' }}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.95 }}
+      className="fixed bottom-6 right-6 z-50 bg-[#25D366] text-white w-16 h-16 rounded-full flex items-center justify-center shadow-[0_8px_32px_-4px_rgba(37,211,102,0.5)] hover:shadow-[0_8px_40px_-4px_rgba(37,211,102,0.6)] transition-shadow"
+    >
+      <MessageCircle size={28} />
+      <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent rounded-full flex items-center justify-center">
+        <span className="text-[9px] font-black text-white">1</span>
+      </span>
+    </motion.a>
+  );
+};
+
 // ... (Navbar, Hero, About, Equipment, PricingModal, Pricing, Benefits, Contact, Footer components)
 
 const Booking = () => {
@@ -1190,14 +1304,16 @@ export default function App() {
                 <main>
                   <Hero />
                   <About />
-                  <Gallery />
+                  <Benefits />
                   <Equipment />
+                  <Gallery />
+                  <Testimonials />
                   <Pricing />
                   <Booking />
-                  <Benefits />
                   <Contact />
                 </main>
                 <Footer />
+                <FloatingWhatsApp />
               </div>
             } />
           </Routes>

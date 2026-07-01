@@ -1,40 +1,13 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { PRICE_TABLES } from '../constants';
-import { Calendar, Users, MessageCircle, Phone } from 'lucide-react';
-
-const formatLatinDateInput = (value: string) => {
-  const digits = value.replace(/\D/g, '').slice(0, 8);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-};
-
-const parseLatinDate = (value: string) => {
-  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (!match) return null;
-
-  const [, dayString, monthString, yearString] = match;
-  const day = Number(dayString);
-  const month = Number(monthString);
-  const year = Number(yearString);
-  const parsedDate = new Date(year, month - 1, day);
-
-  if (
-    parsedDate.getFullYear() !== year ||
-    parsedDate.getMonth() !== month - 1 ||
-    parsedDate.getDate() !== day
-  ) {
-    return null;
-  }
-
-  parsedDate.setHours(0, 0, 0, 0);
-  return parsedDate;
-};
+import { Calendar, Users, MessageCircle, Phone, User } from 'lucide-react';
+import { formatLatinDateInput, parseLatinDate } from '../utils/date';
 
 export const BookingForm = () => {
   const [classType, setClassType] = useState<'grupales' | 'individuales' | 'paddle' | 'otras'>('grupales');
   const [selectedPlanIndex, setSelectedPlanIndex] = useState(0);
   const [numPeople, setNumPeople] = useState(1);
+  const [name, setName] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('9hs a 11hs');
   const [whatsapp, setWhatsapp] = useState('');
@@ -54,8 +27,8 @@ export const BookingForm = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    if (!date || !whatsapp) {
-      alert('Por favor, completa la fecha y tu número de WhatsApp.');
+    if (!name || !date || !whatsapp) {
+      alert('Por favor, completa tu nombre, la fecha y tu número de WhatsApp.');
       return;
     }
 
@@ -72,6 +45,7 @@ export const BookingForm = () => {
     const bookingData = {
       activity: classType,
       plan: selectedPlan.name,
+      name,
       numPeople,
       date,
       time,
@@ -97,7 +71,7 @@ export const BookingForm = () => {
       alert('No se pudo guardar la reserva en el servidor local. Intenta más tarde.');
     }
 
-    const message = `Hola JAH SURF Peru, quiero reservar una clase:\n- Tipo: ${classType}\n- Plan: ${selectedPlan.name}\n- Personas: ${numPeople}\n- Fecha: ${date}\n- Horario: ${time}\n- Total a pagar: S/ ${totalPrice} (US$ ${totalUsd.toFixed(2)} aprox. con TC ${EXCHANGE_RATE})\n- Mi WhatsApp: ${whatsapp}`;
+    const message = `Hola JAH SURF Peru, quiero reservar una clase:\n- Nombre: ${name}\n- Tipo: ${classType}\n- Plan: ${selectedPlan.name}\n- Personas: ${numPeople}\n- Fecha: ${date}\n- Horario: ${time}\n- Total a pagar: S/ ${totalPrice} (US$ ${totalUsd.toFixed(2)} aprox. con TC ${EXCHANGE_RATE})\n- Mi WhatsApp: ${whatsapp}`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/51952641118?text=${encodedMessage}`, '_blank');
@@ -119,6 +93,21 @@ export const BookingForm = () => {
                 {type === 'paddle' ? 'Paddle' : type}
               </button>
             ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em] mb-3">Tu Nombre</label>
+          <div className="flex items-center gap-4">
+            <User className="text-primary" />
+            <input
+              type="text"
+              autoComplete="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full bg-white border-2 border-slate-100 rounded-2xl px-5 sm:px-6 py-4 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium"
+              placeholder="Tu nombre completo"
+            />
           </div>
         </div>
 
