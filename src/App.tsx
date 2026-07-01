@@ -412,8 +412,46 @@ const About = () => {
 
 const Gallery = () => {
   const [experiencePhotos, setExperiencePhotos] = useState<{ src: string; alt: string }[]>([]);
-  const [galleryPhotos, setGalleryPhotos] = useState<{ src: string; alt: string }[]>([]);
   const [videos, setVideos] = useState<{ id: string; url: string; title?: string }[]>([]);
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const isDragging = React.useRef(false);
+  const startX = React.useRef(0);
+  const scrollLeft = React.useRef(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollRef.current) return;
+    isDragging.current = true;
+    startX.current = e.pageX - scrollRef.current.offsetLeft;
+    scrollLeft.current = scrollRef.current.scrollLeft;
+    scrollRef.current.style.cursor = 'grabbing';
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging.current || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.5;
+    scrollRef.current.scrollLeft = scrollLeft.current - walk;
+  };
+
+  const handleMouseUp = () => {
+    isDragging.current = false;
+    if (scrollRef.current) scrollRef.current.style.cursor = 'grab';
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!scrollRef.current) return;
+    isDragging.current = true;
+    startX.current = e.touches[0].pageX - scrollRef.current.offsetLeft;
+    scrollLeft.current = scrollRef.current.scrollLeft;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging.current || !scrollRef.current) return;
+    const x = e.touches[0].pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.5;
+    scrollRef.current.scrollLeft = scrollLeft.current - walk;
+  };
 
   const toEmbedUrl = (rawUrl: string) => {
     if (!rawUrl) return '';
@@ -450,7 +488,6 @@ const Gallery = () => {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data?.experienceImages)) setExperiencePhotos(data.experienceImages);
-          if (Array.isArray(data?.galleryImages)) setGalleryPhotos(data.galleryImages);
           if (Array.isArray(data?.videoLinks)) setVideos(data.videoLinks);
         }
       } catch (error) {
@@ -488,20 +525,6 @@ const Gallery = () => {
           Galeria <span className="text-primary">Multimedia</span>
         </h2>
 
-        {galleryPhotos.filter((p) => p.src).length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 mb-14">
-            {galleryPhotos.filter((p) => p.src).map((photo, i) => (
-              <motion.div
-                key={`gallery-${i}`}
-                whileHover={{ scale: 1.03 }}
-                className="rounded-3xl overflow-hidden shadow-lg bg-white"
-              >
-                <img src={photo.src} alt={photo.alt || 'Galeria'} className="w-full h-64 object-cover" loading="lazy" decoding="async" referrerPolicy="no-referrer" />
-              </motion.div>
-            ))}
-          </div>
-        )}
-
         {videos.filter((v) => v.url).length > 0 && (
           <div>
             <div className="flex items-center gap-4 mb-3">
@@ -509,15 +532,26 @@ const Gallery = () => {
               <span className="text-primary font-black uppercase tracking-[0.2em] text-xs">Shorts</span>
             </div>
             <h3 className="text-2xl sm:text-3xl font-display font-black text-slate-900 uppercase tracking-tight mb-2">Videos</h3>
-            <p className="text-slate-500 mb-8 font-medium">Desliza para explorar. Reproduccion automatica en silencio.</p>
+            <p className="text-slate-500 mb-8 font-medium">Arrastra horizontalmente para explorar. Reproduccion automatica en silencio.</p>
             <div className="relative">
-              <div className="flex gap-4 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 sm:-mx-6 sm:px-6">
+              <div
+                ref={scrollRef}
+                className="flex gap-4 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 sm:-mx-6 sm:px-6 select-none"
+                style={{ cursor: 'grab' }}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleMouseUp}
+              >
                 {videos.filter((v) => v.url).map((video, i) => (
                   <div
                     key={video.id || `video-${i}`}
                     className="flex-shrink-0 snap-center w-[260px] sm:w-[280px] md:w-[300px]"
                   >
-                    <div className="rounded-[2rem] overflow-hidden shadow-xl bg-slate-900 aspect-[9/16] relative group">
+                    <div className="rounded-[2rem] overflow-hidden shadow-xl bg-slate-900 aspect-[9/16] relative group pointer-events-none">
                       <iframe
                         src={toEmbedUrl(video.url)}
                         title={video.title || `Video ${i + 1}`}
