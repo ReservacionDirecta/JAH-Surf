@@ -93,9 +93,22 @@ async function startServer() {
     fs.writeFileSync(usersPath, JSON.stringify(users, null, 2));
   }
 
-  // Bootstrap default admin user
+  // Bootstrap default admin user and fix legacy users without salt
   function ensureDefaultAdminUser(): void {
     const users = loadUsers();
+    let changed = false;
+
+    // Re-hash legacy users that are missing a salt field
+    for (const u of users) {
+      if (!u.salt) {
+        const newSalt = crypto.randomBytes(16).toString('hex');
+        u.salt = newSalt;
+        u.password = hashPassword(ADMIN_PASSWORD, newSalt);
+        changed = true;
+        console.log(`[AUTH] Re-hashed legacy user: ${u.email}`);
+      }
+    }
+
     const adminExists = users.some(u => u.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
 
     if (!adminExists) {
@@ -108,12 +121,14 @@ async function startServer() {
         role: 'admin',
         createdAt: new Date().toISOString(),
       });
-      saveUsers(users);
+      changed = true;
       console.log(`[AUTH] Admin local creado: ${ADMIN_EMAIL}`);
       if (process.env.NODE_ENV !== 'production') {
         console.log(`[AUTH] Password admin local: ${ADMIN_PASSWORD}`);
       }
     }
+
+    if (changed) saveUsers(users);
   }
 
   ensureDefaultAdminUser();
@@ -140,33 +155,38 @@ async function startServer() {
   });
 
   app.post('/api/auth/login', (req, res) => {
-    const { email, password } = req.body;
+    try {
+      const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password required' });
+      if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password required' });
+      }
+
+      const users = loadUsers();
+      const user = users.find(u => u.email === email);
+
+      if (!user || !user.salt || !verifyPassword(password, user.salt, user.password)) {
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+
+      const token = jwt.sign(
+        { id: user.id, email: user.email, role: user.role },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRY }
+      );
+
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+        },
+      });
+    } catch (err) {
+      console.error('Login error:', err);
+      return res.status(500).json({ message: 'Internal server error' });
     }
-
-    const users = loadUsers();
-    const user = users.find(u => u.email === email);
-
-    if (!user || !verifyPassword(password, user.salt, user.password)) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRY }
-    );
-
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
-    });
   });
 
   app.post('/api/auth/register', (req, res) => {
