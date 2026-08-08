@@ -1,20 +1,26 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Menu, X, Waves, Instagram, Facebook, MessageCircle, MapPin, Clock, Mail, Shield, Heart, Zap, Users, Dumbbell, Leaf } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './AuthProvider';
-import { formatLatinDateInput, parseLatinDate } from './utils/date';
-import { PRICE_TABLES } from './constants';
+import { toEmbedUrl } from './utils/video';
+import { toWhatsAppNumber } from './utils/whatsapp';
+import { useContent } from './hooks/useContent';
+import { useSettings } from './hooks/useSettings';
 
-import { BookingForm } from './components/BookingForm';
+import { BookingEngine } from './components/BookingEngine';
 import { AdminPanel } from './components/AdminPanel';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Logo } from './components/logo';
 
-// --- Components ---
+const DEFAULT_WHATSAPP_DISPLAY = '+51 952 641 118';
+const DEFAULT_EMAIL = 'jahsamba@hotmail.com';
+
 
 const Navbar = () => {
   const prefersReducedMotion = useReducedMotion();
+  const { content } = useContent();
+  const waNumber = toWhatsAppNumber(content.contactWhatsApp);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('inicio');
@@ -118,7 +124,7 @@ const Navbar = () => {
               </a>
             ))}
             <a 
-              href="https://wa.me/51952641118" 
+              href={`https://wa.me/${waNumber}`}
               target="_blank" 
               rel="noopener noreferrer"
               className="bg-primary hover:bg-primary/90 text-white px-7 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/20"
@@ -182,7 +188,7 @@ const Navbar = () => {
                 </motion.a>
               ))}
               <motion.a 
-                href="https://wa.me/51952641118"
+                href={`https://wa.me/${waNumber}`}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="bg-primary text-white px-8 py-4 rounded-[2rem] text-base sm:text-lg font-black uppercase tracking-widest mt-5 shadow-2xl shadow-primary/40 text-center"
                 initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 12 }}
@@ -201,134 +207,45 @@ const Navbar = () => {
 };
 
 const Hero = () => {
-  const prefersReducedMotion = useReducedMotion();
-  const [content, setContent] = useState<any>({
-    heroTitle: "JAH SURF",
-    heroSubtitle: "Conecta con el mar, respeta su fuerza y vive el surf como estilo de vida.",
-    heroImageUrl: "https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&q=80&w=1920"
-  });
-
-  useEffect(() => {
-    const loadContent = async () => {
-      try {
-        const res = await fetch('/api/store/content');
-        if (res.ok) {
-          const data = await res.json();
-          if (data) setContent(data);
-        }
-      } catch (error) {
-        console.warn('Content load failed:', error);
-      }
-    };
-
-    loadContent();
-  }, []);
+  const { content } = useContent();
 
   return (
-    <section id="inicio" className="relative h-[100svh] min-h-[620px] md:min-h-screen flex items-center justify-center overflow-hidden">
+    <section id="inicio" className="relative min-h-[600px] md:min-h-screen flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
-        <img 
+        <img
           src={content.heroImageUrl || "https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&q=80&w=1920"}
-          alt="Surf background" 
-          className="w-full h-full object-cover scale-105"
+          alt="Surf en San Bartolo"
+          className="w-full h-full object-cover"
           fetchPriority="high"
-          loading="eager"
-          decoding="async"
-          referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/85 via-slate-950/45 to-slate-950/12 md:to-white"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/60 to-slate-950/30"></div>
       </div>
-      
-      <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
-        <motion.div
-          initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.95 }}
-          animate={prefersReducedMotion ? undefined : { opacity: 1, scale: 1 }}
-          transition={{ duration: 0.7, ease: "easeOut" }}
-        >
-          <span className="inline-block px-4 py-1.5 glass text-white text-[10px] sm:text-xs font-black uppercase tracking-[0.26em] mb-6 sm:mb-8 rounded-full">
-            San Bartolo, Perú
-          </span>
-          <h1 className="text-4xl sm:text-6xl md:text-8xl lg:text-[10rem] font-display font-black text-white mb-6 sm:mb-8 leading-[0.86] uppercase tracking-tighter">
-            {(content.heroTitle || "JAH SURF").trim().toUpperCase() === "JAH SURF" ? (
-              <>
-                <span className="text-red-500">J</span>
-                <span className="text-amber-300">A</span>
-                <span className="text-emerald-400">H</span>
-                <span className="text-sky-300"> SURF</span>
-                <span className="text-sky-300">.</span>
-              </>
-            ) : (
-              <>{content.heroTitle || "JAH SURF"}.</>
-            )}
-          </h1>
-          <div className="flex justify-center gap-2 mb-8">
-            <div className="w-8 h-1 bg-primary rounded-full"></div>
-            <div className="w-8 h-1 bg-secondary rounded-full"></div>
-            <div className="w-8 h-1 bg-accent rounded-full"></div>
-          </div>
-          <p className="text-lg sm:text-xl md:text-3xl text-white mb-10 sm:mb-12 max-w-3xl mx-auto font-medium leading-relaxed [text-shadow:_0_2px_4px_rgb(0_0_0_/_50%)]">
-            {content.heroSubtitle}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center">
-            <a href="#clases" className="group relative bg-primary text-white px-8 sm:px-12 py-4 sm:py-5 rounded-2xl font-black text-base sm:text-xl transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-primary/40 overflow-hidden">
-              <span className="relative z-10">RESERVAR CLASE</span>
-              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-            </a>
-            <a href="#nosotros" className="glass text-coal px-8 sm:px-12 py-4 sm:py-5 rounded-2xl font-black text-base sm:text-xl transition-all hover:bg-white/20 active:scale-95 border-2 border-white/30">
-              CONÓCENOS
-            </a>
-          </div>
-          <div className="flex items-center justify-center gap-6 mt-10 sm:mt-12">
-            <div className="flex items-center gap-2 glass px-4 py-2 rounded-full">
-              <div className="flex -space-x-2">
-                {[0,1,2,3].map(i => (
-                  <div key={i} className="w-7 h-7 rounded-full border-2 border-white/30 bg-gradient-to-br from-primary/60 to-secondary/60" />
-                ))}
-              </div>
-              <span className="text-white/80 text-xs font-bold ml-1">+500 alumnos</span>
-            </div>
-            <div className="flex items-center gap-1 glass px-4 py-2 rounded-full">
-              <span className="text-secondary text-sm">★★★★★</span>
-              <span className="text-white/80 text-xs font-bold">4.9</span>
-            </div>
-          </div>
-        </motion.div>
+
+      <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center py-20 md:py-32">
+        <span className="inline-block px-4 py-1.5 bg-white/10 backdrop-blur-sm text-white/90 text-xs sm:text-sm font-bold uppercase tracking-[0.2em] mb-6 sm:mb-8 rounded-full border border-white/20">
+          San Bartolo, Perú
+        </span>
+        <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-display font-black text-white mb-6 leading-[0.9] uppercase tracking-tight">
+          {content.heroTitle || "JAH SURF"}.
+        </h1>
+        <p className="text-lg sm:text-xl md:text-2xl text-white/90 mb-10 max-w-2xl mx-auto font-medium leading-relaxed">
+          {content.heroSubtitle || "Conecta con el mar, respeta su fuerza y vive el surf como estilo de vida."}
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <a href="#clases" className="bg-primary text-white px-8 py-4 rounded-xl font-bold text-base sm:text-lg hover:bg-primary/90 transition-colors">
+            RESERVAR CLASE
+          </a>
+          <a href="#nosotros" className="bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-xl font-bold text-base sm:text-lg hover:bg-white/20 transition-colors border border-white/20">
+            CONÓCENOS
+          </a>
+        </div>
       </div>
-      
-      <motion.div 
-        animate={prefersReducedMotion ? undefined : { y: [0, 15, 0] }}
-        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute bottom-10 sm:bottom-12 left-1/2 -translate-x-1/2 text-white/60 flex flex-col items-center gap-2"
-      >
-        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Scroll</span>
-        <div className="w-px h-12 bg-gradient-to-b from-white to-transparent"></div>
-      </motion.div>
     </section>
   );
 };
 
 const About = () => {
-  const [content, setContent] = useState<any>({
-    aboutTitle: "Más que una escuela, una filosofía",
-    aboutText: "En JAH Surf nuestra prioridad es crear primero un vínculo real con el mar y la Naturaleza. Enseñamos a respetar su poder, mantener la calma frente a lo que no controlamos y aprender técnicas para correr tabla en una experiencia segura, satisfactoria y profunda.",
-    aboutImageUrl: "https://images.unsplash.com/photo-1537519646099-335112f03225?auto=format&fit=crop&q=80&w=1000",
-  });
-
-  useEffect(() => {
-    const loadContent = async () => {
-      try {
-        const res = await fetch('/api/store/content');
-        if (res.ok) {
-          const data = await res.json();
-          if (data) setContent((prev: any) => ({ ...prev, ...data }));
-        }
-      } catch (error) {
-        console.warn('About content load failed:', error);
-      }
-    };
-
-    loadContent();
-  }, []);
+  const { content } = useContent();
 
   const pillars = [
     { icon: <Shield className="w-12 h-12 text-primary" />, title: "Seguridad", desc: "Ponemos atención a cuidados y precauciones. Contamos con certificaciones de primeros auxilios y plan de contingencia." },
@@ -354,7 +271,7 @@ const About = () => {
               {content.aboutTitle || "Más que una escuela, una filosofía"}
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-slate-500 mb-10 md:mb-12 leading-relaxed font-medium">
-              {content.aboutText}
+              {content.aboutText || "En JAH Surf nuestra prioridad es crear primero un vínculo real con el mar y la Naturaleza. Enseñamos a respetar su poder, mantener la calma frente a lo que no controlamos y aprender técnicas para correr tabla en una experiencia segura, satisfactoria y profunda."}
             </p>
             <div className="grid gap-6 md:gap-8 lg:gap-10">
               {pillars.map((p, i) => (
@@ -371,39 +288,16 @@ const About = () => {
             </div>
           </motion.div>
           
-          <motion.div
-            initial={{ opacity: 0, x: 60 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="relative"
-          >
-            <div className="relative z-10 aspect-[4/5] rounded-[3rem] overflow-hidden shadow-[0_40px_80px_-15px_rgba(0,0,0,0.2)]">
-              <img 
+          <div className="relative">
+            <div className="aspect-[4/5] rounded-2xl overflow-hidden">
+              <img
                 src={content.aboutImageUrl || "https://images.unsplash.com/photo-1537519646099-335112f03225?auto=format&fit=crop&q=80&w=1000"}
-                alt="Surf lesson" 
-                className="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
+                alt="Surf lesson"
+                className="w-full h-full object-cover"
                 loading="lazy"
-                decoding="async"
-                referrerPolicy="no-referrer"
               />
             </div>
-            <div className="absolute -bottom-12 -left-12 glass p-10 rounded-[2.5rem] shadow-xl hidden xl:block max-w-sm z-20 border-2 border-white/30">
-              <p className="text-xl italic text-slate-900 font-display leading-relaxed">
-                "El mar es el mejor maestro de paciencia y humildad que existe."
-              </p>
-              <div className="mt-6 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Waves className="text-primary w-5 h-5" />
-                </div>
-                <div className="flex items-center gap-3">
-                  <Logo size="sm" shape="circle" className="w-10 h-10 text-[10px] shadow-none" />
-                  <p className="font-black text-primary uppercase tracking-widest text-sm">Team</p>
-                </div>
-              </div>
-            </div>
-            <div className="absolute -top-10 -right-10 w-56 h-56 bg-[radial-gradient(circle,rgba(16,185,129,0.12),transparent_68%)] -z-10"></div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>
@@ -411,109 +305,22 @@ const About = () => {
 };
 
 const Gallery = () => {
-  const [experiencePhotos, setExperiencePhotos] = useState<{ src: string; alt: string }[]>([]);
-  const [videos, setVideos] = useState<{ id: string; url: string; title?: string }[]>([]);
-  const scrollRef = React.useRef<HTMLDivElement>(null);
-  const isDragging = React.useRef(false);
-  const startX = React.useRef(0);
-  const scrollLeft = React.useRef(0);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!scrollRef.current) return;
-    isDragging.current = true;
-    startX.current = e.pageX - scrollRef.current.offsetLeft;
-    scrollLeft.current = scrollRef.current.scrollLeft;
-    scrollRef.current.style.cursor = 'grabbing';
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging.current || !scrollRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - scrollRef.current.offsetLeft;
-    const walk = (x - startX.current) * 1.5;
-    scrollRef.current.scrollLeft = scrollLeft.current - walk;
-  };
-
-  const handleMouseUp = () => {
-    isDragging.current = false;
-    if (scrollRef.current) scrollRef.current.style.cursor = 'grab';
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!scrollRef.current) return;
-    isDragging.current = true;
-    startX.current = e.touches[0].pageX - scrollRef.current.offsetLeft;
-    scrollLeft.current = scrollRef.current.scrollLeft;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging.current || !scrollRef.current) return;
-    const x = e.touches[0].pageX - scrollRef.current.offsetLeft;
-    const walk = (x - startX.current) * 1.5;
-    scrollRef.current.scrollLeft = scrollLeft.current - walk;
-  };
-
-  const toEmbedUrl = (rawUrl: string) => {
-    if (!rawUrl) return '';
-
-    const safeUrl = rawUrl.trim();
-
-    const ytWatch = safeUrl.match(/(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{6,})/i);
-    if (ytWatch) {
-      return `https://www.youtube.com/embed/${ytWatch[1]}?autoplay=1&mute=1&loop=1&playlist=${ytWatch[1]}&controls=0&modestbranding=1&rel=0&playsinline=1`;
-    }
-
-    const ytShort = safeUrl.match(/(?:youtu\.be\/)([a-zA-Z0-9_-]{6,})/i);
-    if (ytShort) {
-      return `https://www.youtube.com/embed/${ytShort[1]}?autoplay=1&mute=1&loop=1&playlist=${ytShort[1]}&controls=0&modestbranding=1&rel=0&playsinline=1`;
-    }
-
-    const ytEmbed = safeUrl.match(/(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{6,})/i);
-    if (ytEmbed) {
-      return `https://www.youtube.com/embed/${ytEmbed[1]}?autoplay=1&mute=1&loop=1&playlist=${ytEmbed[1]}&controls=0&modestbranding=1&rel=0&playsinline=1`;
-    }
-
-    const vimeo = safeUrl.match(/vimeo\.com\/(\d{6,})/i);
-    if (vimeo) {
-      return `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1&muted=1&loop=1&autopause=0&background=1`;
-    }
-
-    return safeUrl;
-  };
-
-  useEffect(() => {
-    const loadGallery = async () => {
-      try {
-        const res = await fetch('/api/store/content');
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data?.experienceImages)) setExperiencePhotos(data.experienceImages);
-          if (Array.isArray(data?.videoLinks)) setVideos(data.videoLinks);
-        }
-      } catch (error) {
-        console.warn('Gallery content load failed:', error);
-      }
-    };
-
-    loadGallery();
-  }, []);
+  const { content } = useContent();
+  const experiencePhotos = content.experienceImages || [];
+  const videos = content.videoLinks || [];
 
   return (
     <>
     <section id="experiencia" className="py-20 md:py-32 section-sand section-divider">
       <div className="container mx-auto px-4 sm:px-6">
-        <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-black text-slate-900 uppercase tracking-tighter mb-10 md:mb-16 text-center">
+        <h2 className="text-4xl sm:text-5xl md:text-6xl font-display font-black text-slate-900 uppercase tracking-tighter mb-10 md:mb-14 text-center">
           Nuestra <span className="text-primary">Experiencia</span>
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {experiencePhotos.filter(p => p.src).map((photo, i) => (
-            <motion.div 
-              key={i}
-              whileHover={{ scale: 1.05 }}
-              className="rounded-3xl overflow-hidden shadow-lg"
-            >
-              <img src={photo.src} alt={photo.alt} className="w-full h-72 sm:h-80 object-cover" loading="lazy" decoding="async" referrerPolicy="no-referrer" />
-            </motion.div>
+            <div key={i} className="rounded-xl overflow-hidden">
+              <img src={photo.src} alt={photo.alt} className="w-full h-64 sm:h-72 object-cover" loading="lazy" />
+            </div>
           ))}
         </div>
       </div>
@@ -521,55 +328,34 @@ const Gallery = () => {
 
     <section id="galeria" className="py-20 md:py-28 section-paper section-divider">
       <div className="container mx-auto px-4 sm:px-6">
-        <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-black text-slate-900 uppercase tracking-tighter mb-10 md:mb-14 text-center">
+        <h2 className="text-4xl sm:text-5xl md:text-6xl font-display font-black text-slate-900 uppercase tracking-tighter mb-10 md:mb-14 text-center">
           Galeria <span className="text-primary">Multimedia</span>
         </h2>
 
         {videos.filter((v) => v.url).length > 0 && (
           <div>
-            <div className="flex items-center gap-4 mb-3">
-              <div className="w-12 h-px bg-primary"></div>
-              <span className="text-primary font-black uppercase tracking-[0.2em] text-xs">Shorts</span>
-            </div>
-            <h3 className="text-2xl sm:text-3xl font-display font-black text-slate-900 uppercase tracking-tight mb-2">Videos</h3>
-            <p className="text-slate-500 mb-8 font-medium">Arrastra horizontalmente para explorar. Reproduccion automatica en silencio.</p>
-            <div className="relative">
-              <div
-                ref={scrollRef}
-                className="flex gap-4 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 sm:-mx-6 sm:px-6 select-none"
-                style={{ cursor: 'grab' }}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleMouseUp}
-              >
-                {videos.filter((v) => v.url).map((video, i) => (
-                  <div
-                    key={video.id || `video-${i}`}
-                    className="flex-shrink-0 snap-center w-[260px] sm:w-[280px] md:w-[300px]"
-                  >
-                    <div className="rounded-[2rem] overflow-hidden shadow-xl bg-slate-900 aspect-[9/16] relative group pointer-events-none">
-                      <iframe
-                        src={toEmbedUrl(video.url)}
-                        title={video.title || `Video ${i + 1}`}
-                        className="absolute inset-0 w-full h-full"
-                        loading="lazy"
-                        allow="autoplay; encrypted-media; picture-in-picture"
-                        allowFullScreen
-                      />
-                      <div className="absolute inset-0 rounded-[2rem] ring-1 ring-inset ring-white/10 pointer-events-none" />
-                    </div>
-                    {video.title && (
-                      <p className="mt-3 text-sm font-bold text-slate-700 text-center px-2 truncate">{video.title}</p>
-                    )}
+            <h3 className="text-2xl sm:text-3xl font-display font-black text-slate-900 uppercase tracking-tight mb-6">Videos</h3>
+            <div className="flex gap-4 overflow-x-auto pb-4">
+              {videos.filter((v) => v.url).map((video, i) => (
+                <div
+                  key={video.id || `video-${i}`}
+                  className="flex-shrink-0 w-[260px] sm:w-[280px] md:w-[300px]"
+                >
+                  <div className="rounded-xl overflow-hidden bg-slate-900 aspect-[9/16]">
+                    <iframe
+                      src={toEmbedUrl(video.url)}
+                      title={video.title || `Video ${i + 1}`}
+                      className="w-full h-full"
+                      loading="lazy"
+                      allow="autoplay; encrypted-media; picture-in-picture"
+                      allowFullScreen
+                    />
                   </div>
-                ))}
-              </div>
-              <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-paper to-transparent pointer-events-none z-10 hidden sm:block" style={{ background: 'linear-gradient(to left, #fdfcf9, transparent)' }} />
-              <div className="absolute top-0 left-0 w-16 h-full bg-gradient-to-r from-paper to-transparent pointer-events-none z-10 hidden sm:block" style={{ background: 'linear-gradient(to right, #fdfcf9, transparent)' }} />
+                  {video.title && (
+                    <p className="mt-2 text-sm font-medium text-slate-700 text-center truncate">{video.title}</p>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -598,52 +384,49 @@ const Equipment = () => {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-8 md:gap-12">
-          <div className="lg:col-span-7 glass p-8 sm:p-10 md:p-16 rounded-[2rem] md:rounded-[3rem] shadow-sm flex flex-col justify-center">
-            <h3 className="text-3xl font-black mb-10 flex items-center gap-4 uppercase tracking-tight">
-              <div className="bg-primary/10 p-3 rounded-2xl"><Waves className="text-primary" /></div> 
+        <div className="grid lg:grid-cols-2 gap-8">
+          <div className="bg-white p-8 md:p-12 rounded-2xl border border-slate-100">
+            <h3 className="text-2xl font-black mb-8 flex items-center gap-3 uppercase tracking-tight">
+              <Waves className="text-primary w-7 h-7" />
               Kit de Aventura
             </h3>
-            <div className="grid sm:grid-cols-2 gap-6 md:gap-8">
+            <div className="grid sm:grid-cols-2 gap-6">
               {[
                 { t: "Tablas Soft", d: "Diseñadas para máxima estabilidad." },
                 { t: "Pitas Pro", d: "Elásticas y ultra resistentes." },
                 { t: "Wetsuits", d: "Todas las tallas, máxima flexibilidad." },
                 { t: "Instructores", d: "Certificados con pasión por el mar." }
               ].map((item, i) => (
-                <div key={i} className="group">
-                  <h4 className="text-xl font-black text-slate-900 mb-2 group-hover:text-primary transition-colors uppercase tracking-tight">{item.t}</h4>
+                <div key={i}>
+                  <h4 className="text-lg font-bold text-slate-900 mb-1 uppercase tracking-tight">{item.t}</h4>
                   <p className="text-slate-500 leading-relaxed">{item.d}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="lg:col-span-5 glass-dark text-white p-8 sm:p-10 md:p-16 rounded-[2rem] md:rounded-[3rem] shadow-xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-[radial-gradient(circle,rgba(16,185,129,0.18),transparent_70%)] -translate-y-1/2 translate-x-1/2 opacity-90 transition-opacity duration-300 group-hover:opacity-100"></div>
-            <div className="relative z-10">
-              <h3 className="text-3xl font-black mb-10 flex items-center gap-4 uppercase tracking-tight">
-                <div className="bg-white/10 p-3 rounded-2xl"><Clock className="text-secondary" /></div>
-                La Sesión
-              </h3>
-              <div className="mb-12">
-                <span className="text-7xl md:text-8xl font-display font-black leading-none tracking-tighter">1H 20M</span>
-                <p className="text-secondary font-black uppercase tracking-[0.3em] text-sm mt-4">Aprendizaje Puro</p>
-              </div>
-              <div className="space-y-10">
-                <div className="flex gap-6">
-                  <span className="text-4xl font-display font-black text-white/20">01</span>
-                  <div>
-                    <h4 className="text-xl font-black uppercase tracking-tight mb-2">Teoría & Calentamiento</h4>
-                    <p className="text-white/50 leading-relaxed">20 minutos de fundamentos y movilidad en la arena.</p>
-                  </div>
+          <div className="bg-slate-900 text-white p-8 md:p-12 rounded-2xl">
+            <h3 className="text-2xl font-black mb-8 flex items-center gap-3 uppercase tracking-tight">
+              <Clock className="text-secondary w-7 h-7" />
+              La Sesión
+            </h3>
+            <div className="mb-10">
+              <span className="text-6xl md:text-7xl font-display font-black leading-none tracking-tight">1H 20M</span>
+              <p className="text-secondary font-bold uppercase tracking-[0.2em] text-sm mt-3">Aprendizaje Puro</p>
+            </div>
+            <div className="space-y-8">
+              <div className="flex gap-4">
+                <span className="text-3xl font-display font-bold text-white/20">01</span>
+                <div>
+                  <h4 className="text-lg font-bold uppercase tracking-tight mb-1">Teoría & Calentamiento</h4>
+                  <p className="text-white/60 leading-relaxed">20 minutos de fundamentos y movilidad en la arena.</p>
                 </div>
-                <div className="flex gap-6">
-                  <span className="text-4xl font-display font-black text-white/20">02</span>
-                  <div>
-                    <h4 className="text-xl font-black uppercase tracking-tight mb-2">Acción en el Mar</h4>
-                    <p className="text-white/50 leading-relaxed">60 minutos de práctica guiada por tu instructor.</p>
-                  </div>
+              </div>
+              <div className="flex gap-4">
+                <span className="text-3xl font-display font-bold text-white/20">02</span>
+                <div>
+                  <h4 className="text-lg font-bold uppercase tracking-tight mb-1">Acción en el Mar</h4>
+                  <p className="text-white/60 leading-relaxed">60 minutos de práctica guiada por tu instructor.</p>
                 </div>
               </div>
             </div>
@@ -688,23 +471,16 @@ const Testimonials = () => {
         </div>
         <div className="grid md:grid-cols-3 gap-6 md:gap-8">
           {testimonials.map((t, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.12, duration: 0.6 }}
-              className="glass p-8 md:p-10 rounded-[2rem] relative"
-            >
+            <div key={i} className="bg-white p-8 rounded-xl border border-slate-100">
               <div className="text-secondary mb-4 text-sm tracking-widest">{'★'.repeat(t.rating)}</div>
-              <p className="text-slate-600 text-base sm:text-lg leading-relaxed font-medium mb-8 italic">"{t.text}"</p>
+              <p className="text-slate-600 text-base leading-relaxed mb-6">"{t.text}"</p>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
-                  <span className="text-primary font-black text-sm">{t.name.charAt(0)}</span>
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-primary font-bold text-sm">{t.name.charAt(0)}</span>
                 </div>
-                <span className="font-black text-slate-900 uppercase tracking-tight text-sm">{t.name}</span>
+                <span className="font-bold text-slate-900 uppercase tracking-tight text-sm">{t.name}</span>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
@@ -712,371 +488,76 @@ const Testimonials = () => {
   );
 };
 
-const PricingModal = ({ isOpen, onClose, title, packages, color }) => {
-  const [name, setName] = useState('');
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('9hs a 11hs');
-  const [whatsapp, setWhatsapp] = useState('');
-  const [selectedPackageIndex, setSelectedPackageIndex] = useState(0);
-  const [numPeople, setNumPeople] = useState(1);
-  const prefersReducedMotion = useReducedMotion();
-  const timeOptions = ['9hs a 11hs', '12hs a 2pm', '3pm a 5pm'];
-
-  const extractPenAmount = (priceLabel: string) => {
-    const penMatch = priceLabel.match(/S\/\s*([\d.,]+)/i);
-    const rawValue = penMatch?.[1] ?? priceLabel.match(/([\d.,]+)/)?.[1] ?? '0';
-    return Number(rawValue.replace(/,/g, '')) || 0;
-  };
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const html = document.documentElement;
-    const body = document.body;
-    const previousHtmlOverflow = html.style.overflow;
-    const previousBodyOverflow = body.style.overflow;
-
-    html.style.overflow = 'hidden';
-    body.style.overflow = 'hidden';
-
-    return () => {
-      html.style.overflow = previousHtmlOverflow;
-      body.style.overflow = previousBodyOverflow;
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    setSelectedPackageIndex(0);
-    setNumPeople(1);
-  }, [isOpen, title]);
-
-  if (!isOpen) return null;
-
-  const selectedPackage = packages[selectedPackageIndex] || packages[0];
-  const selectedPackagePrice = selectedPackage ? extractPenAmount(selectedPackage.price) : 0;
-  const totalPrice = selectedPackagePrice * numPeople;
-
-  const colorClasses = {
-    primary: {
-      border: 'hover:border-primary/30',
-      badge: 'text-primary bg-primary/10',
-      selected: 'border-primary bg-primary/10 ring-2 ring-primary/15',
-      button: 'bg-primary hover:bg-primary/90 shadow-primary/20'
-    },
-    secondary: {
-      border: 'hover:border-secondary/30',
-      badge: 'text-secondary bg-secondary/10',
-      selected: 'border-secondary bg-secondary/10 ring-2 ring-secondary/15',
-      button: 'bg-secondary hover:bg-secondary/90 shadow-secondary/20'
-    },
-    accent: {
-      border: 'hover:border-accent/30',
-      badge: 'text-amber-900 bg-amber-200',
-      selected: 'border-accent bg-amber-50 ring-2 ring-accent/15',
-      button: 'bg-amber-600 hover:bg-amber-700 shadow-amber-200'
-    }
-  }[color || 'primary'];
-
-  return (
-    <div className="fixed inset-0 z-[100] overflow-y-auto">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        className="absolute inset-0 bg-slate-950/88"
-      />
-
-      <div className="relative min-h-full flex items-start md:items-center justify-center p-4 md:p-6">
-        <motion.div
-          initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
-          transition={{ duration: prefersReducedMotion ? 0.12 : 0.2, ease: 'easeOut' }}
-          className="relative w-full max-w-5xl rounded-[2rem] overflow-hidden border border-white/60 bg-white shadow-[0_24px_80px_-28px_rgba(15,23,42,0.42)]"
-        >
-          <div className="p-6 md:p-8 border-b border-slate-200 flex justify-between items-center bg-slate-50/95">
-            <div>
-              <h3 className="text-2xl md:text-3xl font-display font-black text-slate-900 uppercase tracking-tighter">{title}</h3>
-              <p className="text-slate-500 text-xs md:text-sm font-medium mt-1 uppercase tracking-widest">Planes mensuales</p>
-            </div>
-            <button onClick={onClose} className="p-3 hover:bg-slate-200 rounded-full transition-colors" aria-label="Cerrar modal">
-              <X className="w-6 h-6 text-slate-900" />
-            </button>
-          </div>
-
-          <div className="grid lg:grid-cols-[1.25fr_0.85fr] gap-0">
-            <div className="p-6 md:p-8 border-b lg:border-b-0 lg:border-r border-slate-200">
-              <div className="grid gap-4">
-                {packages.map((pkg, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setSelectedPackageIndex(i)}
-                    className={`w-full text-left flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 md:p-6 rounded-3xl bg-slate-50 border transition-colors duration-200 ${i === selectedPackageIndex ? colorClasses.selected : `border-slate-200 ${colorClasses.border}`}`}
-                  >
-                    <div className="mb-4 sm:mb-0">
-                      <h4 className="font-bold text-lg md:text-xl text-slate-900">{pkg.name}</h4>
-                      <p className="text-slate-500 font-medium">{pkg.desc}</p>
-                    </div>
-                    <div className="text-left sm:text-right w-full sm:w-auto pt-4 sm:pt-0 border-t sm:border-t-0 border-slate-200">
-                      <div className="flex flex-col">
-                        <span className="text-2xl md:text-3xl font-black text-slate-900 leading-none">{pkg.price}</span>
-                        {pkg.perClass && (
-                          <span className={`font-bold text-sm mt-2 ${colorClasses.badge} px-3 py-1 rounded-full inline-block w-fit sm:ml-auto`}>
-                            {pkg.perClass} <span className="text-[10px] opacity-70 uppercase">por clase</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="p-6 md:p-8 bg-slate-50/60">
-              <div className="space-y-4 md:sticky md:top-6">
-                <input type="text" placeholder="Nombre" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-5 py-4" />
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  maxLength={10}
-                  value={date}
-                  onChange={(e) => setDate(formatLatinDateInput(e.target.value))}
-                  className="w-full bg-white border-2 border-slate-100 rounded-2xl px-5 py-4"
-                  placeholder="dd/mm/aaaa"
-                />
-                <select value={time} onChange={(e) => setTime(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-5 py-4">
-                  {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-                <div className="space-y-2">
-                  <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em]">Personas</label>
-                  <div className="flex items-center gap-3 rounded-2xl border-2 border-slate-100 bg-white px-4 py-3">
-                    <Users className="w-5 h-5 text-primary" />
-                    <input
-                      type="number"
-                      min="1"
-                      inputMode="numeric"
-                      value={numPeople}
-                      onChange={(e) => setNumPeople(Math.max(1, Number(e.target.value) || 1))}
-                      className="w-full bg-transparent outline-none"
-                    />
-                  </div>
-                </div>
-                <input type="tel" placeholder="WhatsApp" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-5 py-4" />
-
-                <div className="rounded-2xl bg-slate-900 text-white p-5">
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-white/70 mb-2">Reserva seleccionada</p>
-                  <p className="font-black text-lg leading-tight">{selectedPackage?.name || 'Selecciona un paquete'}</p>
-                  <div className="mt-3 flex items-end justify-between gap-4">
-                    <div>
-                      <p className="text-xs text-white/70">{numPeople} {numPeople === 1 ? 'persona' : 'personas'}</p>
-                      <p className="text-3xl font-black text-primary">S/ {totalPrice}</p>
-                    </div>
-                    {selectedPackage?.perClass && (
-                      <span className={`font-bold text-xs ${colorClasses.badge} px-3 py-1 rounded-full`}>
-                        {selectedPackage.perClass} <span className="text-[10px] opacity-70 uppercase">por clase</span>
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <button
-                  onClick={async () => {
-                    const parsedDate = parseLatinDate(date);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-
-                    if (!name || !date || !whatsapp) {
-                      alert('Por favor, completa nombre, fecha y WhatsApp.');
-                      return;
-                    }
-
-                    if (!parsedDate) {
-                      alert('Ingresa la fecha con formato dd/mm/aaaa.');
-                      return;
-                    }
-
-                    if (parsedDate < today) {
-                      alert('La fecha de reserva no puede ser anterior a hoy.');
-                      return;
-                    }
-
-                    const bookingData = {
-                      activity: title,
-                      plan: selectedPackage?.name || '',
-                      name,
-                      numPeople,
-                      date,
-                      time,
-                      totalPrice,
-                      whatsapp,
-                      timestamp: new Date().toISOString()
-                    };
-
-                    try {
-                      const bookingKey = `booking_modal_${Date.now()}`;
-                      await fetch('/api/store', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                          key: bookingKey,
-                          data: bookingData
-                        }),
-                      });
-                    } catch (error) {
-                      console.error('Error al guardar en el servidor:', error);
-                    }
-
-                    const message = `Hola JAH SURF Peru, quiero reservar:
-- Actividad: ${title}
-- Paquete: ${selectedPackage?.name || 'No especificado'}
-- Nombre: ${name}
-- Personas: ${numPeople}
-- Fecha: ${date}
-- Horario: ${time}
-- Total: S/ ${totalPrice}
-- Mi WhatsApp: ${whatsapp}`;
-                    window.open(`https://wa.me/51952641118?text=${encodeURIComponent(message)}`, '_blank');
-                  }}
-                  className={`flex items-center justify-center gap-3 w-full ${colorClasses.button} text-white text-center py-5 rounded-2xl font-black text-lg transition-colors shadow-lg`}
-                >
-                  <MessageCircle className="w-6 h-6" />
-                  RESERVAR POR WHATSAPP
-                </button>
-
-                <p className="text-center text-slate-400 text-xs mt-2 font-bold uppercase tracking-widest">
-                  * Sujeto a condiciones climáticas y disponibilidad
-                </p>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    </div>
-  );
-};
+type Category = 'grupales' | 'individuales' | 'paddle' | 'otras';
 
 const Pricing = () => {
-  const [modalData, setModalData] = useState(null);
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
+  const { settings } = useSettings();
 
-  const fmtPrice = (n: number) => `S/ ${n.toLocaleString('es-PE')}`;
-  const fmtPerClass = (price: number, classes: number) => `S/ ${Math.round(price / classes)}`;
+  const categoryIdToType: Record<string, Category> = {
+    grupales: 'grupales',
+    individuales: 'individuales',
+    paddle: 'paddle',
+    otras: 'otras',
+  };
 
-  const buildPackages = (plans: { name: string; price: number; classesPerMonth?: number }[]) =>
-    plans.map((p) => ({
-      name: p.name,
-      desc: p.classesPerMonth ? `${p.classesPerMonth} clases al mes` : 'Clase individual',
-      price: fmtPrice(p.price),
-      ...(p.classesPerMonth ? { perClass: fmtPerClass(p.price, p.classesPerMonth) } : {}),
-    }));
-
-  const pricingCategories = [
-    {
-      id: 'grupales',
-      title: "Clases Grupales",
-      icon: <Users className="w-12 h-12" />,
-      color: "primary",
-      desc: "Aprende con amigos o conoce gente nueva en un ambiente dinámico.",
-      packages: buildPackages(PRICE_TABLES.grupales),
-    },
-    {
-      id: 'individuales',
-      title: "Clases Individuales",
-      icon: <Zap className="w-12 h-12" />,
-      color: "secondary",
-      desc: "Atención 100% personalizada para perfeccionar tu técnica rápidamente.",
-      packages: buildPackages(PRICE_TABLES.individuales),
-    },
-    {
-      id: 'paddle',
-      title: "Clases y Paseos en Paddle",
-      icon: <Waves className="w-12 h-12" />,
-      color: "accent",
-      desc: "Mismo costo y mismos paquetes que clases individuales, en modalidad Paddle.",
-      packages: buildPackages(PRICE_TABLES.paddle),
-    },
-    {
-      id: 'otras',
-      title: "Otras Actividades",
-      icon: <Waves className="w-12 h-12" />,
-      color: "accent",
-      desc: "Experiencias grupales, viajes y eventos diseñados para la comunidad.",
-      packages: [
-        { name: "Paseos en Paddle", desc: "Paseo grupal de 2 horas", price: fmtPrice(120) },
-        { name: "Surf Camps", desc: "Fin de semana inmersivo (Vie–Dom)", price: fmtPrice(816) },
-        { name: "Eventos Corporativos", desc: "Team building en el mar", price: fmtPrice(816) },
-        { name: "Alquiler de Equipo", desc: "Tabla + Wetsuit (2h)", price: fmtPrice(86) },
-      ],
-    },
+  const pricingCategories: { id: string; title: string; icon: React.ReactNode; desc: string }[] = [
+    { id: 'grupales', title: 'Clases Grupales', icon: <Users className="w-6 h-6" />, desc: 'Aprende con amigos en un ambiente dinámico.' },
+    { id: 'individuales', title: 'Clases Individuales', icon: <Zap className="w-6 h-6" />, desc: 'Atención 100% personalizada.' },
+    { id: 'paddle', title: 'Paddle Surf', icon: <Waves className="w-6 h-6" />, desc: 'Paseos y clases de paddle.' },
+    { id: 'otras', title: 'Otras Actividades', icon: <Waves className="w-6 h-6" />, desc: 'Surf camps, eventos y alquiler.' },
   ];
 
+  const openType = openCategory ? categoryIdToType[openCategory] : undefined;
+
   return (
-    <section id="clases" className="py-20 md:py-32 section-paper section-divider">
+    <section id="clases" className="py-20 md:py-28 section-paper section-divider">
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="text-center mb-14 md:mb-24">
-          <div className="flex items-center justify-center gap-4 mb-6">
-            <div className="w-12 h-px bg-primary"></div>
-            <span className="text-primary font-black uppercase tracking-[0.2em] text-xs">Membresías</span>
-            <div className="w-12 h-px bg-primary"></div>
-          </div>
-          <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-black text-slate-900 mb-6 uppercase tracking-tighter">
+        <div className="text-center mb-12 md:mb-16">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-display font-black text-slate-900 mb-4 uppercase tracking-tighter">
             Elige tu <span className="text-primary">Ritmo</span>
           </h2>
-          <p className="text-slate-500 text-base sm:text-lg md:text-xl max-w-2xl mx-auto font-medium">
-            Planes flexibles diseñados para que el surf se convierta en tu nuevo estilo de vida.
+          <p className="text-slate-500 text-base sm:text-lg max-w-xl mx-auto">
+            Planes flexibles para que el surf se convierta en tu estilo de vida.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 xl:grid-cols-4 gap-6 md:gap-10">
-          {pricingCategories.map((cat, idx) => (
-            <motion.div 
+        <div className="grid lg:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
+          {pricingCategories.map((cat) => (
+            <div
               key={cat.id}
-              whileHover={{ y: -8 }}
-              className={`glass p-8 md:p-12 rounded-[2rem] md:rounded-[3rem] flex flex-col items-center text-center group cursor-pointer transition-all duration-300 hover:shadow-[0_24px_48px_-24px_rgba(0,0,0,0.12)] hover:bg-white/84 relative ${idx === 0 ? 'ring-2 ring-primary/30' : ''}`}
-              onClick={() => setModalData(cat)}
+              onClick={() => settings.reservationsEnabled && setOpenCategory(cat.id)}
+              className={`bg-white p-6 rounded-xl border transition-shadow ${settings.reservationsEnabled ? 'border-slate-100 hover:shadow-md cursor-pointer' : 'border-slate-100 opacity-50 cursor-not-allowed'}`}
             >
-              {idx === 0 && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/30 whitespace-nowrap">
-                  Más popular
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  {cat.icon}
                 </div>
-              )}
-              <div className={`bg-white p-8 rounded-[2rem] shadow-sm mb-10 group-hover:scale-110 transition-all duration-500 ${
-                cat.color === 'primary' ? 'text-primary group-hover:bg-primary group-hover:text-white' :
-                cat.color === 'secondary' ? 'text-secondary group-hover:bg-secondary group-hover:text-white' :
-                'text-accent group-hover:bg-accent group-hover:text-white'
-              }`}>
-                {cat.icon}
+                <h3 className="text-lg font-bold text-slate-900 uppercase tracking-tight">{cat.title}</h3>
               </div>
-              <h3 className="text-3xl font-display font-black text-slate-900 mb-6 uppercase tracking-tight">{cat.title}</h3>
-              <p className="text-slate-500 mb-10 leading-relaxed font-medium">{cat.desc}</p>
-              <button className={`mt-auto w-full py-5 rounded-2xl border-2 font-black text-lg transition-all duration-300 uppercase tracking-widest ${
-                cat.color === 'primary' ? 'border-primary text-primary group-hover:bg-primary group-hover:text-white' :
-                cat.color === 'secondary' ? 'border-secondary text-secondary group-hover:bg-secondary group-hover:text-white' :
-                'border-accent text-accent group-hover:bg-accent group-hover:text-white'
-              }`}>
-                VER DETALLES
+              <p className="text-slate-500 text-sm mb-4">{cat.desc}</p>
+              <button
+                disabled={!settings.reservationsEnabled}
+                className="w-full py-3 rounded-lg border border-primary text-primary font-bold text-sm hover:bg-primary hover:text-white transition-colors disabled:cursor-not-allowed"
+              >
+                {settings.reservationsEnabled ? 'RESERVAR' : 'NO DISPONIBLE'}
               </button>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
 
-      <AnimatePresence>
-        {modalData && (
-          <PricingModal 
-            isOpen={!!modalData} 
-            onClose={() => setModalData(null)} 
-            title={modalData.title}
-            packages={modalData.packages}
-            color={modalData.color}
-          />
-        )}
-      </AnimatePresence>
+      {openCategory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60" onClick={() => setOpenCategory(null)} />
+          <div className="relative z-10 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <BookingEngine
+              defaultCategory={openType}
+              onClose={() => setOpenCategory(null)}
+            />
+          </div>
+        </div>
+      )}
     </section>
   );
 };
@@ -1092,40 +573,22 @@ const Benefits = () => {
   ];
 
   return (
-    <section id="beneficios" className="py-20 md:py-32 section-ink text-white overflow-hidden relative">
-      <div className="absolute inset-0 opacity-5 pointer-events-none">
-        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(2,132,199,0.3),transparent_70%)]"></div>
-      </div>
-      
-      <div className="container mx-auto px-4 sm:px-6 relative z-10">
-        <div className="text-center mb-14 md:mb-24">
-          <div className="flex items-center justify-center gap-4 mb-6">
-            <div className="w-12 h-px bg-secondary"></div>
-            <span className="text-secondary font-black uppercase tracking-[0.2em] text-xs">Transformación</span>
-            <div className="w-12 h-px bg-secondary"></div>
-          </div>
-          <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-black mb-6 uppercase tracking-tighter">Beneficios del <span className="text-secondary">Surf</span></h2>
+    <section id="beneficios" className="py-20 md:py-32 section-ink text-white">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="text-center mb-14 md:mb-20">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-display font-black mb-6 uppercase tracking-tighter">Beneficios del <span className="text-secondary">Surf</span></h2>
           <p className="text-white/80 text-base sm:text-lg md:text-xl max-w-2xl mx-auto font-medium">
             Mucho más que un deporte, una medicina natural para tu cuerpo y mente.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {benefits.map((b, i) => (
-            <motion.div 
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.6 }}
-              className="glass-dark p-7 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[2.5rem] hover:bg-white/12 transition-all duration-300 group border-white/10"
-            >
-              <div className="text-secondary mb-8 group-hover:scale-105 transition-transform duration-300">
-                {b.icon}
-              </div>
-              <h4 className="text-2xl font-black mb-4 uppercase tracking-tight">{b.title}</h4>
-              <p className="text-white/80 leading-relaxed font-medium">{b.desc}</p>
-            </motion.div>
+            <div key={i} className="bg-white/5 p-8 rounded-xl border border-white/10">
+              <div className="text-secondary mb-6">{b.icon}</div>
+              <h4 className="text-xl font-bold mb-3 uppercase tracking-tight">{b.title}</h4>
+              <p className="text-white/70 leading-relaxed">{b.desc}</p>
+            </div>
           ))}
         </div>
       </div>
@@ -1134,69 +597,75 @@ const Benefits = () => {
 };
 
 const Contact = () => {
-  const [contactName, setContactName] = useState('');
-  const [contactWhatsapp, setContactWhatsapp] = useState('');
-  const [contactInterest, setContactInterest] = useState('Clases Grupales');
-  const [contactMessage, setContactMessage] = useState('');
+  const { content } = useContent();
+  const [name, setName] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
+  const [interest, setInterest] = useState('Clases Grupales');
+  const [message, setMessage] = useState('');
 
-  const handleContactSubmit = () => {
-    if (!contactName || !contactMessage) {
+  const displayWhatsApp = typeof content.contactWhatsApp === 'string' && content.contactWhatsApp
+    ? content.contactWhatsApp
+    : DEFAULT_WHATSAPP_DISPLAY;
+  const displayEmail = typeof content.contactEmail === 'string' && content.contactEmail
+    ? content.contactEmail
+    : DEFAULT_EMAIL;
+  const waNumber = toWhatsAppNumber(content.contactWhatsApp);
+
+  const handleSubmit = () => {
+    if (!name || !message) {
       alert('Por favor, completa tu nombre y el mensaje.');
       return;
     }
-    const text = `Hola JAH SURF Peru, me comunico desde su web:\n- Nombre: ${contactName}\n- WhatsApp: ${contactWhatsapp || 'No proporcionado'}\n- Interés: ${contactInterest}\n- Mensaje: ${contactMessage}`;
-    window.open(`https://wa.me/51952641118?text=${encodeURIComponent(text)}`, '_blank');
+    const text = `Hola JAH SURF Peru, me comunico desde su web:\n- Nombre: ${name}\n- WhatsApp: ${whatsapp || 'No proporcionado'}\n- Interés: ${interest}\n- Mensaje: ${message}`;
+    window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   return (
-    <section id="contacto" className="py-20 md:py-32 section-paper section-divider">
+    <section id="contacto" className="py-20 md:py-28 section-paper section-divider">
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="grid lg:grid-cols-2 gap-12 md:gap-16 lg:gap-24">
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-          >
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-12 h-px bg-primary"></div>
-              <span className="text-primary font-black uppercase tracking-[0.2em] text-xs">Hablemos</span>
-            </div>
-            <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-black text-slate-900 mb-10 md:mb-12 leading-[0.92] uppercase tracking-tighter">
-              ¿Listo para tu <span className="text-primary">primera ola?</span>
-            </h2>
-            
-            <div className="space-y-6 md:space-y-10">
+        <div className="text-center mb-12 md:mb-16">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-display font-black text-slate-900 mb-4 uppercase tracking-tighter">
+            ¿Listo para tu <span className="text-primary">primera ola?</span>
+          </h2>
+          <p className="text-slate-500 text-base sm:text-lg max-w-xl mx-auto">
+            Escríbenos o visítanos. Estamos en San Bartolo todos los días.
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-5 gap-8 lg:gap-12">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="space-y-4">
               {[
-                { icon: <MapPin />, t: "Ubicación", d: "Malecón Rivera Norte 636, San Bartolo, Lima, Perú", color: "text-primary" },
-                { icon: <Clock />, t: "Horarios", d: "Todos los días de 7:00 AM a 7:00 PM", color: "text-secondary" },
-                { icon: <MessageCircle />, t: "WhatsApp", d: "+51 952 641 118", color: "text-accent" },
-                { icon: <Mail />, t: "Email", d: "jahsamba@hotmail.com", color: "text-primary" }
+                { icon: <MapPin className="w-5 h-5" />, label: "Ubicación", value: "Malecón Rivera Norte 636, San Bartolo, Lima" },
+                { icon: <Clock className="w-5 h-5" />, label: "Horarios", value: "Todos los días, 7:00 AM – 7:00 PM" },
+                { icon: <MessageCircle className="w-5 h-5" />, label: "WhatsApp", value: displayWhatsApp },
+                { icon: <Mail className="w-5 h-5" />, label: "Email", value: displayEmail },
               ].map((item, i) => (
-                <div key={i} className="flex gap-4 sm:gap-6 md:gap-8 items-start group">
-                  <div className={`bg-slate-50 p-4 md:p-5 rounded-2xl ${item.color} group-hover:bg-slate-900 group-hover:text-white transition-all duration-300`}>
-                    {React.cloneElement(item.icon, { size: 32 })}
+                <div key={i} className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                    {item.icon}
                   </div>
                   <div>
-                    <h4 className="font-black text-xl uppercase tracking-tight mb-1">{item.t}</h4>
-                    <p className="text-slate-600 text-base sm:text-lg font-medium">{item.d}</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{item.label}</p>
+                    <p className="text-sm text-slate-700">{item.value}</p>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-12 md:mt-16 flex gap-4 sm:gap-6">
-              <a href="https://www.instagram.com/jahsurfperu/" target="_blank" rel="noopener noreferrer" className="bg-slate-900 text-white p-4 md:p-5 rounded-[1.2rem] md:rounded-[1.5rem] hover:bg-primary hover:scale-110 active:scale-95 transition-all duration-300 shadow-xl shadow-slate-900/10" aria-label="Instagram">
-                <Instagram size={28} />
+            <div className="flex gap-3">
+              <a href="https://www.instagram.com/jahsurfperu/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-lg bg-slate-900 text-white flex items-center justify-center hover:bg-primary transition-colors" aria-label="Instagram">
+                <Instagram size={18} />
               </a>
-              <a href="https://www.facebook.com/jahsurfperu" target="_blank" rel="noopener noreferrer" className="bg-slate-900 text-white p-4 md:p-5 rounded-[1.2rem] md:rounded-[1.5rem] hover:bg-primary hover:scale-110 active:scale-95 transition-all duration-300 shadow-xl shadow-slate-900/10" aria-label="Facebook">
-                <Facebook size={28} />
+              <a href="https://www.facebook.com/jahsurfperu" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-lg bg-slate-900 text-white flex items-center justify-center hover:bg-primary transition-colors" aria-label="Facebook">
+                <Facebook size={18} />
               </a>
-              <a href="https://wa.me/51952641118" target="_blank" rel="noopener noreferrer" className="bg-slate-900 text-white p-4 md:p-5 rounded-[1.2rem] md:rounded-[1.5rem] hover:bg-primary hover:scale-110 active:scale-95 transition-all duration-300 shadow-xl shadow-slate-900/10" aria-label="WhatsApp">
-                <MessageCircle size={28} />
+              <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-lg bg-[#25D366] text-white flex items-center justify-center hover:opacity-80 transition-opacity" aria-label="WhatsApp">
+                <MessageCircle size={18} />
               </a>
             </div>
 
-            <div className="mt-10 md:mt-14 rounded-[2rem] overflow-hidden shadow-xl h-64 md:h-80">
+            <div className="rounded-xl overflow-hidden border border-slate-200 h-48">
               <iframe
                 src="https://maps.google.com/maps?q=Malecon+Rivera+Norte+636+San+Bartolo+Lima+Peru&t=&z=15&ie=UTF8&iwloc=&output=embed"
                 width="100%"
@@ -1208,43 +677,43 @@ const Contact = () => {
                 title="Ubicación JAH SURF Peru - San Bartolo"
               />
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="glass p-6 sm:p-8 md:p-16 rounded-[2rem] md:rounded-[3.5rem] shadow-2xl shadow-slate-900/5"
-          >
-            <h3 className="text-2xl sm:text-3xl font-black mb-8 md:mb-10 uppercase tracking-tight">Envíanos un mensaje</h3>
-            <form className="space-y-6 md:space-y-8" onSubmit={(e) => { e.preventDefault(); handleContactSubmit(); }}>
-              <div className="grid md:grid-cols-2 gap-5 md:gap-8">
-                <div className="space-y-3">
-                  <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em]">Nombre</label>
-                  <input type="text" value={contactName} onChange={(e) => setContactName(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-5 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium" placeholder="Tu nombre" />
+          <div className="lg:col-span-3 bg-white p-6 md:p-8 rounded-2xl border border-slate-100">
+            <h3 className="text-xl font-bold text-slate-900 mb-6">Envíanos un mensaje</h3>
+            <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+              <div className="grid sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Nombre</label>
+                  <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" placeholder="Tu nombre" />
                 </div>
-                <div className="space-y-3">
-                  <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em]">WhatsApp</label>
-                  <input type="tel" value={contactWhatsapp} onChange={(e) => setContactWhatsapp(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-5 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium" placeholder="Tu número" />
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">WhatsApp</label>
+                  <input type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" placeholder="+51 900 000 000" />
                 </div>
               </div>
-              <div className="space-y-3">
-                <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em]">Interés</label>
-                <select value={contactInterest} onChange={(e) => setContactInterest(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-5 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium appearance-none">
-                  <option>Clases Grupales</option>
-                  <option>Clases Individuales</option>
-                  <option>Eventos / Otros</option>
-                </select>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Interés</label>
+                <div className="flex gap-2">
+                  {['Clases Grupales', 'Clases Individuales', 'Eventos / Otros'].map((opt) => (
+                    <button key={opt} type="button" onClick={() => setInterest(opt)}
+                      className={`flex-1 py-3 rounded-xl text-xs font-bold transition-colors ${
+                        interest === opt ? 'bg-primary text-white' : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
+                      }`}>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="space-y-3">
-                <label className="block text-xs font-black text-slate-600 uppercase tracking-[0.15em]">Mensaje</label>
-                <textarea value={contactMessage} onChange={(e) => setContactMessage(e.target.value)} className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-5 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium h-40 resize-none" placeholder="¿En qué podemos ayudarte?" />
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Mensaje</label>
+                <textarea value={message} onChange={(e) => setMessage(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-28 resize-none" placeholder="¿En qué podemos ayudarte?" />
               </div>
-              <button type="submit" className="w-full bg-primary text-white py-6 rounded-2xl font-black text-xl hover:bg-primary/90 transition-all shadow-2xl shadow-primary/30 hover:-translate-y-1 active:translate-y-0 uppercase tracking-widest">
+              <button type="submit" className="w-full bg-primary text-white py-3.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors">
                 ENVIAR MENSAJE
               </button>
             </form>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>
@@ -1253,26 +722,23 @@ const Contact = () => {
 
 const Footer = () => {
   return (
-    <footer className="glass-dark py-14 md:py-20 border-t border-white/5">
+    <footer className="bg-slate-900 py-12 border-t border-slate-800">
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-8 md:gap-12">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-3">
-            <Logo size="sm" shape="circle" className="w-12 h-12 text-[11px]" />
-            <span className="text-accent text-2xl font-display font-black uppercase tracking-tighter">Peru</span>
+            <Logo size="sm" shape="circle" className="w-10 h-10 text-[9px]" />
+            <span className="text-white text-xl font-bold uppercase tracking-tight">JAH SURF Peru</span>
           </div>
-          
+
           <div className="text-center md:text-left">
-            <p className="text-white/70 text-sm font-medium">
+            <p className="text-slate-400 text-sm">
               © 2026 JAH SURF Peru. Todos los derechos reservados.
             </p>
-            <p className="text-white/60 text-[10px] uppercase font-black tracking-[0.2em] mt-2">
-              Desarrollado por <a href="https://www.miraescuchahablaconamor.com" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-primary transition-colors">miraescuchahablaconamor.com</a>
-            </p>
           </div>
-          
-          <div className="flex gap-6 sm:gap-10">
-            <a href="#" className="text-white/30 hover:text-white transition-colors text-xs uppercase font-black tracking-[0.3em]">Términos</a>
-            <a href="#" className="text-white/30 hover:text-white transition-colors text-xs uppercase font-black tracking-[0.3em]">Privacidad</a>
+
+          <div className="flex gap-6">
+            <a href="/terms" className="text-slate-500 hover:text-white transition-colors text-sm">Términos</a>
+            <a href="/privacy" className="text-slate-500 hover:text-white transition-colors text-sm">Privacidad</a>
           </div>
         </div>
       </div>
@@ -1281,45 +747,53 @@ const Footer = () => {
 };
 
 const FloatingWhatsApp = () => {
-  const prefersReducedMotion = useReducedMotion();
+  const { content } = useContent();
+  const waNumber = toWhatsAppNumber(content.contactWhatsApp);
   return (
-    <motion.a
-      href="https://wa.me/51952641118?text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20las%20clases%20de%20surf"
+    <a
+      href={`https://wa.me/${waNumber}?text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20las%20clases%20de%20surf`}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Contactar por WhatsApp"
-      initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: 1.5, duration: 0.4, ease: 'easeOut' }}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.95 }}
-      className="fixed bottom-6 right-6 z-50 bg-[#25D366] text-white w-16 h-16 rounded-full flex items-center justify-center shadow-[0_8px_32px_-4px_rgba(37,211,102,0.5)] hover:shadow-[0_8px_40px_-4px_rgba(37,211,102,0.6)] transition-shadow"
+      className="fixed bottom-6 right-6 z-50 bg-[#25D366] text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
     >
-      <MessageCircle size={28} />
-      <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent rounded-full flex items-center justify-center">
-        <span className="text-[9px] font-black text-white">1</span>
-      </span>
-    </motion.a>
+      <MessageCircle size={24} />
+    </a>
   );
 };
 
-// ... (Navbar, Hero, About, Equipment, PricingModal, Pricing, Benefits, Contact, Footer components)
+
 
 const Booking = () => {
-  return (
-    <section id="reserva" className="py-20 md:py-32 section-sand section-divider">
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl sm:text-5xl md:text-7xl font-display font-black text-slate-900 mb-6 uppercase tracking-tighter">
-            Reserva tu <span className="text-primary">Aventura</span>
+  const { settings } = useSettings();
+
+  if (!settings.reservationsEnabled) {
+    return (
+      <section id="reserva" className="py-20 md:py-28 section-sand section-divider">
+        <div className="container mx-auto px-4 sm:px-6 text-center">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-display font-black text-slate-900 mb-4 uppercase tracking-tighter">
+            Reservas <span className="text-primary">Cerradas</span>
           </h2>
-          <p className="text-slate-500 text-base sm:text-lg md:text-xl max-w-2xl mx-auto font-medium">
-            Elige tu clase, indica cuántas personas asistirán y asegura tu lugar en el mar.
+          <p className="text-slate-500 text-base sm:text-lg max-w-xl mx-auto">
+            Estamos actualizando la agenda. Escríbenos por WhatsApp para más información.
           </p>
         </div>
-        <div className="max-w-2xl mx-auto">
-          <BookingForm />
+      </section>
+    );
+  }
+
+  return (
+    <section id="reserva" className="py-20 md:py-28 section-sand section-divider">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="text-center mb-10">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-display font-black text-slate-900 mb-4 uppercase tracking-tighter">
+            Reserva tu <span className="text-primary">Aventura</span>
+          </h2>
+          <p className="text-slate-500 text-base sm:text-lg max-w-xl mx-auto">
+            Elige tu clase y asegura tu lugar en el mar.
+          </p>
         </div>
+        <BookingEngine />
       </div>
     </section>
   );

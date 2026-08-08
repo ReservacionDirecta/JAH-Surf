@@ -1,9 +1,10 @@
 ﻿import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../AuthProvider";
 import { authenticatedFetch } from "../auth";
+import { normalizeVideoUrl } from "../utils/video";
 import { LogOut, Save, Layout, DollarSign, Calendar, Image, BarChart3, Settings, Trash2, Plus, ArrowUp, ArrowDown, GripVertical, Menu, X } from "lucide-react";
 
-type Tab = "content" | "pricing" | "bookings" | "images" | "experience" | "reports" | "settings";
+type Tab = 'content' | 'pricing' | 'bookings' | 'images' | 'experience' | 'reports' | 'settings';
 
 type Booking = {
   id: string;
@@ -14,9 +15,30 @@ type Booking = {
   time: string;
   totalPrice: number;
   whatsapp: string;
-  status?: "pendiente" | "confirmada" | "completada" | "cancelada";
+  status?: 'pendiente' | 'confirmada' | 'completada' | 'cancelada';
   notes?: string;
   timestamp?: string;
+};
+
+type PricingItem = {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+};
+
+type Content = {
+  heroTitle: string;
+  heroSubtitle: string;
+  aboutTitle: string;
+  aboutText: string;
+  contactEmail: string;
+  contactWhatsApp: string;
+  heroImageUrl: string;
+  aboutImageUrl: string;
+  galleryImages: GalleryImage[];
+  experienceImages: GalleryImage[];
+  videoLinks: VideoItem[];
 };
 
 type GalleryImage = {
@@ -31,51 +53,51 @@ type VideoItem = {
   title?: string;
 };
 
-type ContentListKey = "galleryImages" | "experienceImages" | "videoLinks";
+type ContentListKey = 'galleryImages' | 'experienceImages' | 'videoLinks';
 
 const defaultContent = {
-  heroTitle: "JAH SURF",
-  heroSubtitle: "Donde el mar se encuentra con tu espíritu.",
-  aboutTitle: "Más que una escuela, una filosofía",
-  aboutText: "En JAH SURF Peru, el surf es el puente para reconectar con tu ser interior.",
-  contactEmail: "hola@jahsurfperu.com",
-  contactWhatsApp: "+51 904 060 670",
-  heroImageUrl: "https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&q=80&w=1920",
-  aboutImageUrl: "https://images.unsplash.com/photo-1537519646099-335112f03225?auto=format&fit=crop&q=80&w=1000",
+  heroTitle: 'JAH SURF',
+  heroSubtitle: 'Donde el mar se encuentra con tu espíritu.',
+  aboutTitle: 'Más que una escuela, una filosofía',
+  aboutText: 'En JAH SURF Peru, el surf es el puente para reconectar con tu ser interior.',
+  contactEmail: 'hola@jahsurfperu.com',
+  contactWhatsApp: '+51 904 060 670',
+  heroImageUrl: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&q=80&w=1920',
+  aboutImageUrl: 'https://images.unsplash.com/photo-1537519646099-335112f03225?auto=format&fit=crop&q=80&w=1000',
   galleryImages: [
     {
-      id: "g1",
-      src: "https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&q=80&w=1200",
-      alt: "Surf en San Bartolo",
+      id: 'g1',
+      src: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&q=80&w=1200',
+      alt: 'Surf en San Bartolo',
     },
   ] as GalleryImage[],
   experienceImages: [
-    { id: "e1", src: "", alt: "Surf en San Bartolo" },
-    { id: "e2", src: "", alt: "Clase de surf" },
-    { id: "e3", src: "", alt: "Olas en San Bartolo" },
-    { id: "e4", src: "", alt: "Aprendiendo a surfear" },
+    { id: 'e1', src: '', alt: 'Surf en San Bartolo' },
+    { id: 'e2', src: '', alt: 'Clase de surf' },
+    { id: 'e3', src: '', alt: 'Olas en San Bartolo' },
+    { id: 'e4', src: '', alt: 'Aprendiendo a surfear' },
   ] as GalleryImage[],
   videoLinks: [] as VideoItem[],
 };
 
 const defaultPricing = [
-  { id: "grupales", name: "Clases Grupales", price: 96, description: "Por persona" },
-  { id: "individuales", name: "Clases Individuales", price: 180, description: "Por clase" },
-  { id: "paddle", name: "Clases y Paseos en Paddle", price: 180, description: "Mismo costo que individuales" },
-  { id: "otras", name: "Eventos especiales", price: 420, description: "Por grupo" },
+  { id: 'grupales', name: 'Clases Grupales', price: 96, description: 'Por persona' },
+  { id: 'individuales', name: 'Clases Individuales', price: 180, description: 'Por clase' },
+  { id: 'paddle', name: 'Clases y Paseos en Paddle', price: 180, description: 'Mismo costo que individuales' },
+  { id: 'otras', name: 'Eventos especiales', price: 420, description: 'Por grupo' },
 ];
 
 const defaultSettings = {
-  siteName: "JAH SURF Peru",
+  siteName: 'JAH SURF Peru',
   reservationsEnabled: true,
   maxGalleryItems: 12,
 };
 
 export const AdminPanel = () => {
   const { user, isLoading, isAdmin, login, logout, error } = useAuth();
-  const [activeTab, setActiveTab] = useState<Tab>("content");
-  const [content, setContent] = useState<any>(defaultContent);
-  const [pricing, setPricing] = useState<any[]>(defaultPricing);
+  const [activeTab, setActiveTab] = useState<Tab>('content');
+  const [content, setContent] = useState<Content>(defaultContent);
+  const [pricing, setPricing] = useState<PricingItem[]>(defaultPricing);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [settings, setSettings] = useState(defaultSettings);
   const [saving, setSaving] = useState(false);
@@ -88,11 +110,11 @@ export const AdminPanel = () => {
 
   const reports = useMemo(() => {
     const totalBookings = bookings.length;
-    const confirmed = bookings.filter((b) => b.status === "confirmada" || b.status === "completada").length;
-    const completed = bookings.filter((b) => b.status === "completada").length;
-    const canceled = bookings.filter((b) => b.status === "cancelada").length;
+    const confirmed = bookings.filter((b) => b.status === 'confirmada' || b.status === 'completada').length;
+    const completed = bookings.filter((b) => b.status === 'completada').length;
+    const canceled = bookings.filter((b) => b.status === 'cancelada').length;
     const revenue = bookings
-      .filter((b) => b.status !== "cancelada")
+      .filter((b) => b.status !== 'cancelada')
       .reduce((acc, b) => acc + (Number(b.totalPrice) || 0), 0);
     return { totalBookings, confirmed, completed, canceled, revenue };
   }, [bookings]);
@@ -140,11 +162,18 @@ export const AdminPanel = () => {
           if (bookingsRes.ok) {
             const bookingsData = await bookingsRes.json();
             if (Array.isArray(bookingsData)) {
-              const normalized = bookingsData.map((b: any, idx: number) => ({
-                ...b,
-                id: b.id || `${b.timestamp || "booking"}-${idx}`,
-                status: b.status || "pendiente",
-                notes: b.notes || "",
+              const normalized: Booking[] = bookingsData.map((b: Partial<Booking>, idx: number) => ({
+                id: b.id || `${b.timestamp || 'booking'}-${idx}`,
+                activity: b.activity || '',
+                plan: b.plan || '',
+                numPeople: b.numPeople || 1,
+                date: b.date || '',
+                time: b.time || '',
+                totalPrice: b.totalPrice || 0,
+                whatsapp: b.whatsapp || '',
+                status: b.status || 'pendiente',
+                notes: b.notes || '',
+                timestamp: b.timestamp,
               }));
               setBookings(normalized.sort((a: Booking, b: Booking) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()));
             }
@@ -159,34 +188,34 @@ export const AdminPanel = () => {
           }
         }
       } catch (err) {
-        console.error("Error loading admin data", err);
+        console.error('Error loading admin data', err);
       }
     };
 
     loadData();
   }, [isAdmin]);
 
-  const saveByKey = async (key: string, data: any, message: string) => {
+  const saveByKey = async (key: string, data: unknown, message: string) => {
     setSaving(true);
     try {
-      await authenticatedFetch("/api/store", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      await authenticatedFetch('/api/store', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key, data }),
       });
       alert(message);
     } catch (err) {
       console.error(err);
-      alert("Error al guardar.");
+      alert('Error al guardar.');
     } finally {
       setSaving(false);
     }
   };
 
-  const saveContent = () => saveByKey("content", content, "Contenido guardado con éxito");
-  const savePricing = () => saveByKey("pricing", pricing, "Precios guardados con éxito");
-  const saveBookings = () => saveByKey("bookings", bookings, "Reservas actualizadas con éxito");
-  const saveSettings = () => saveByKey("settings", settings, "Ajustes guardados con éxito");
+  const saveContent = () => saveByKey('content', content, 'Contenido guardado con éxito');
+  const savePricing = () => saveByKey('pricing', pricing, 'Precios guardados con éxito');
+  const saveBookings = () => saveByKey('bookings', bookings, 'Reservas actualizadas con éxito');
+  const saveSettings = () => saveByKey('settings', settings, 'Ajustes guardados con éxito');
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -196,14 +225,14 @@ export const AdminPanel = () => {
       setEmail("");
       setPassword("");
     } catch (err) {
-      setLoginError(err instanceof Error ? err.message : "Error de autenticación");
+      setLoginError(err instanceof Error ? err.message : 'Error de autenticación');
     }
   };
 
   const addPricingRow = () => {
     setPricing((prev) => [
       ...prev,
-      { id: `custom-${Date.now()}`, name: "Nuevo plan", price: 0, description: "Descripción" },
+      { id: `custom-${Date.now()}`, name: 'Nuevo plan', price: 0, description: 'Descripción' },
     ]);
   };
 
@@ -211,15 +240,23 @@ export const AdminPanel = () => {
     setPricing((prev) => prev.filter((item) => item.id !== id));
   };
 
+  const updatePricingItem = (index: number, patch: Partial<PricingItem>) => {
+    setPricing((prev) => prev.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+  };
+
+  const updateBookingItem = (index: number, patch: Partial<Booking>) => {
+    setBookings((prev) => prev.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+  };
+
   const addGalleryItem = () => {
     const gallery = (content.galleryImages || []) as GalleryImage[];
     if (gallery.length >= Number(settings.maxGalleryItems || 12)) {
-      alert("Llegaste al máximo de imágenes configurado.");
+      alert('Llegaste al máximo de imágenes configurado.');
       return;
     }
     setContent({
       ...content,
-      galleryImages: [...gallery, { id: `g-${Date.now()}`, src: "", alt: "" }],
+      galleryImages: [...gallery, { id: `g-${Date.now()}`, src: '', alt: '' }],
     });
   };
 
@@ -267,7 +304,7 @@ export const AdminPanel = () => {
           updateGalleryItem(galleryId, { src: url });
         }
       } else {
-        setContent((prev: any) => ({ ...prev, [fieldName]: url }));
+        setContent((prev) => ({ ...prev, [fieldName]: url }));
       }
     };
 
@@ -326,39 +363,22 @@ export const AdminPanel = () => {
   const addExperienceImage = () => {
     const list = (content.experienceImages || []) as GalleryImage[];
     if (list.length >= Number(settings.maxGalleryItems || 12)) {
-      alert("Llegaste al máximo de imágenes configurado.");
+      alert('Llegaste al máximo de imágenes configurado.');
       return;
     }
     setContent({
       ...content,
-      experienceImages: [...list, { id: `e-${Date.now()}`, src: "", alt: "Nueva experiencia" }],
+      experienceImages: [...list, { id: `e-${Date.now()}`, src: '', alt: 'Nueva experiencia' }],
     });
   };
 
-  const normalizeVideoUrl = (url: string): string => {
-    if (!url) return url;
-    const safeUrl = url.trim();
 
-    const ytWatch = safeUrl.match(/(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{6,})/i);
-    if (ytWatch) return `https://www.youtube.com/embed/${ytWatch[1]}`;
-
-    const ytShort = safeUrl.match(/(?:youtu\.be\/)([a-zA-Z0-9_-]{6,})/i);
-    if (ytShort) return `https://www.youtube.com/embed/${ytShort[1]}`;
-
-    const ytEmbed = safeUrl.match(/(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{6,})/i);
-    if (ytEmbed) return `https://www.youtube.com/embed/${ytEmbed[1]}`;
-
-    const vimeo = safeUrl.match(/vimeo\.com\/(\d{6,})/i);
-    if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`;
-
-    return safeUrl;
-  };
 
   const addVideoItem = () => {
     const list = (content.videoLinks || []) as VideoItem[];
     setContent({
       ...content,
-      videoLinks: [...list, { id: `v-${Date.now()}`, url: "", title: "" }],
+      videoLinks: [...list, { id: `v-${Date.now()}`, url: '', title: '' }],
     });
   };
 
@@ -475,24 +495,14 @@ export const AdminPanel = () => {
   }
 
   const tabs = [
-    { id: "content", icon: <Layout size={20} />, label: "Contenido" },
-    { id: "pricing", icon: <DollarSign size={20} />, label: "Precios" },
-    { id: "bookings", icon: <Calendar size={20} />, label: "Reservas" },
-    { id: "images", icon: <Image size={20} />, label: "Imágenes" },
-    { id: "experience", icon: <Image size={20} />, label: "Experiencia" },
-    { id: "reports", icon: <BarChart3 size={20} />, label: "Reportes" },
-    { id: "settings", icon: <Settings size={20} />, label: "Ajustes" },
+    { id: 'content' as Tab, icon: <Layout size={20} />, label: 'Contenido', title: 'Contenido' },
+    { id: 'pricing' as Tab, icon: <DollarSign size={20} />, label: 'Precios', title: 'Precios' },
+    { id: 'bookings' as Tab, icon: <Calendar size={20} />, label: 'Reservas', title: 'Reservas' },
+    { id: 'images' as Tab, icon: <Image size={20} />, label: 'Imágenes', title: 'Imágenes del Contenido' },
+    { id: 'experience' as Tab, icon: <Image size={20} />, label: 'Experiencia', title: 'Galería Experiencia' },
+    { id: 'reports' as Tab, icon: <BarChart3 size={20} />, label: 'Reportes', title: 'Reportes' },
+    { id: 'settings' as Tab, icon: <Settings size={20} />, label: 'Ajustes', title: 'Ajustes' },
   ];
-
-  const tabTitle: Record<Tab, string> = {
-    content: "Contenido",
-    pricing: "Precios",
-    bookings: "Reservas",
-    images: "Imágenes",
-    experience: "Experiencia",
-    reports: "Reportes",
-    settings: "Ajustes",
-  };
 
   const handleTabChange = (id: Tab) => {
     setActiveTab(id);
@@ -516,7 +526,7 @@ export const AdminPanel = () => {
       {mobileNavOpen && (
         <div className="md:hidden glass-dark text-white px-4 pb-4 flex flex-col gap-2 z-20">
           {tabs.map((tab) => (
-            <button key={tab.id} onClick={() => handleTabChange(tab.id as Tab)} className={`flex items-center gap-4 p-3 rounded-xl ${activeTab === tab.id ? "bg-primary text-white" : "text-white/70 hover:bg-white/10"}`}>
+             <button key={tab.id} onClick={() => handleTabChange(tab.id as Tab)} className={`flex items-center gap-4 p-3 rounded-xl ${activeTab === tab.id ? 'bg-primary text-white' : 'text-white/70 hover:bg-white/10'}`}>
               {tab.icon}
               <span className="font-black uppercase tracking-widest text-xs">{tab.label}</span>
             </button>
@@ -537,7 +547,7 @@ export const AdminPanel = () => {
 
         <nav className="flex flex-col gap-4">
           {tabs.map((tab) => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id as Tab)} className={`flex items-center gap-4 p-4 rounded-2xl ${activeTab === tab.id ? "bg-primary text-white" : "text-white/70 hover:bg-white/10"}`}>
+             <button key={tab.id} onClick={() => setActiveTab(tab.id as Tab)} className={`flex items-center gap-4 p-4 rounded-2xl ${activeTab === tab.id ? 'bg-primary text-white' : 'text-white/70 hover:bg-white/10'}`}>
               {tab.icon}
               <span className="font-black uppercase tracking-widest text-xs">{tab.label}</span>
             </button>
@@ -553,33 +563,33 @@ export const AdminPanel = () => {
       <div className="flex-1 p-4 sm:p-6 md:p-12 overflow-y-auto">
         <header className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-8 md:mb-12">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-black uppercase tracking-tighter">
-            {tabTitle[activeTab]}
+            {tabs.find(t => t.id === activeTab)?.title ?? ''}
           </h1>
-          {(activeTab === "content" || activeTab === "pricing" || activeTab === "bookings" || activeTab === "images" || activeTab === "experience" || activeTab === "settings") && (
-            <button onClick={activeTab === "content" ? saveContent : activeTab === "pricing" ? savePricing : activeTab === "bookings" ? saveBookings : activeTab === "images" || activeTab === "experience" ? saveContent : saveSettings} disabled={saving} className="self-start sm:self-auto bg-primary text-white px-6 py-3 rounded-2xl font-black flex items-center gap-2">
-              <Save size={18} /> {saving ? "Guardando..." : "Guardar"}
+          {(activeTab === 'content' || activeTab === 'pricing' || activeTab === 'bookings' || activeTab === 'images' || activeTab === 'experience' || activeTab === 'settings') && (
+            <button onClick={activeTab === 'content' ? saveContent : activeTab === 'pricing' ? savePricing : activeTab === 'bookings' ? saveBookings : activeTab === 'images' || activeTab === 'experience' ? saveContent : saveSettings} disabled={saving} className="self-start sm:self-auto bg-primary text-white px-6 py-3 rounded-2xl font-black flex items-center gap-2">
+              <Save size={18} /> {saving ? 'Guardando...' : 'Guardar'}
             </button>
           )}
         </header>
 
-        {activeTab === "content" && (
+        {activeTab === 'content' && (
           <div className="space-y-4 bg-white p-6 rounded-xl border">
             <label className="block text-xs font-black uppercase tracking-wider">Titulo Hero</label>
-            <input value={content.heroTitle} onChange={(e) => setContent({ ...content, heroTitle: e.target.value })} className="w-full border rounded-lg px-4 py-3" />
+             <input value={content.heroTitle} onChange={(e) => setContent((prev) => ({ ...prev, heroTitle: e.target.value }))} className="w-full border rounded-lg px-4 py-3" />
             <label className="block text-xs font-black uppercase tracking-wider">Subtitulo Hero</label>
-            <textarea value={content.heroSubtitle} onChange={(e) => setContent({ ...content, heroSubtitle: e.target.value })} className="w-full border rounded-lg px-4 py-3" rows={3} />
+             <textarea value={content.heroSubtitle} onChange={(e) => setContent((prev) => ({ ...prev, heroSubtitle: e.target.value }))} className="w-full border rounded-lg px-4 py-3" rows={3} />
             <label className="block text-xs font-black uppercase tracking-wider">Titulo About</label>
-            <input value={content.aboutTitle || ""} onChange={(e) => setContent({ ...content, aboutTitle: e.target.value })} className="w-full border rounded-lg px-4 py-3" />
+             <input value={content.aboutTitle || ""} onChange={(e) => setContent((prev) => ({ ...prev, aboutTitle: e.target.value }))} className="w-full border rounded-lg px-4 py-3" />
             <label className="block text-xs font-black uppercase tracking-wider">Texto About</label>
-            <textarea value={content.aboutText || ""} onChange={(e) => setContent({ ...content, aboutText: e.target.value })} className="w-full border rounded-lg px-4 py-3" rows={4} />
+             <textarea value={content.aboutText || ""} onChange={(e) => setContent((prev) => ({ ...prev, aboutText: e.target.value }))} className="w-full border rounded-lg px-4 py-3" rows={4} />
             <label className="block text-xs font-black uppercase tracking-wider">Email Contacto</label>
-            <input value={content.contactEmail || ""} onChange={(e) => setContent({ ...content, contactEmail: e.target.value })} className="w-full border rounded-lg px-4 py-3" />
+             <input value={content.contactEmail || ""} onChange={(e) => setContent((prev) => ({ ...prev, contactEmail: e.target.value }))} className="w-full border rounded-lg px-4 py-3" />
             <label className="block text-xs font-black uppercase tracking-wider">WhatsApp Contacto</label>
-            <input value={content.contactWhatsApp || ""} onChange={(e) => setContent({ ...content, contactWhatsApp: e.target.value })} className="w-full border rounded-lg px-4 py-3" />
+             <input value={content.contactWhatsApp || ""} onChange={(e) => setContent((prev) => ({ ...prev, contactWhatsApp: e.target.value }))} className="w-full border rounded-lg px-4 py-3" />
           </div>
         )}
 
-        {activeTab === "pricing" && (
+        {activeTab === 'pricing' && (
           <div className="space-y-4">
             {pricing.map((item, index) => (
               <div key={item.id ?? index} className="bg-white p-4 rounded-xl border">
@@ -587,63 +597,35 @@ export const AdminPanel = () => {
                   <button onClick={() => removePricingRow(item.id)} className="text-red-500 hover:text-red-700"><Trash2 size={16} /></button>
                 </div>
                 <label className="block text-xs font-black uppercase tracking-wider">Nombre</label>
-                <input value={item.name} onChange={(e) => {
-                  const updated = [...pricing];
-                  updated[index] = { ...updated[index], name: e.target.value };
-                  setPricing(updated);
-                }} className="w-full border rounded-lg px-4 py-2" />
+                 <input value={item.name} onChange={(e) => updatePricingItem(index, { name: e.target.value })} className="w-full border rounded-lg px-4 py-2" />
                 <label className="block text-xs font-black uppercase tracking-wider mt-2">Precio</label>
-                <input type="number" value={item.price} onChange={(e) => {
-                  const updated = [...pricing];
-                  updated[index] = { ...updated[index], price: Number(e.target.value) };
-                  setPricing(updated);
-                }} className="w-full border rounded-lg px-4 py-2" />
+                 <input type="number" value={item.price} onChange={(e) => updatePricingItem(index, { price: Number(e.target.value) })} className="w-full border rounded-lg px-4 py-2" />
                 <label className="block text-xs font-black uppercase tracking-wider mt-2">Descripcion</label>
-                <input value={item.description} onChange={(e) => {
-                  const updated = [...pricing];
-                  updated[index] = { ...updated[index], description: e.target.value };
-                  setPricing(updated);
-                }} className="w-full border rounded-lg px-4 py-2" />
+                 <input value={item.description} onChange={(e) => updatePricingItem(index, { description: e.target.value })} className="w-full border rounded-lg px-4 py-2" />
               </div>
             ))}
             <button onClick={addPricingRow} className="bg-slate-900 text-white px-4 py-2 rounded-lg inline-flex items-center gap-2"><Plus size={16} /> Agregar plan</button>
           </div>
         )}
 
-        {activeTab === "bookings" && (
+        {activeTab === 'bookings' && (
           <div className="space-y-4">
             {bookings.map((booking, idx) => (
               <div key={booking.id || idx} className="bg-white p-4 rounded-xl border space-y-2">
                 <p><strong>{booking.activity}</strong> ({booking.plan})</p>
                 <div className="grid md:grid-cols-2 gap-3">
-                  <input value={booking.date || ""} onChange={(e) => {
-                    const updated = [...bookings];
-                    updated[idx] = { ...updated[idx], date: e.target.value };
-                    setBookings(updated);
-                  }} className="border rounded-lg px-3 py-2" />
-                  <input value={booking.time || ""} onChange={(e) => {
-                    const updated = [...bookings];
-                    updated[idx] = { ...updated[idx], time: e.target.value };
-                    setBookings(updated);
-                  }} className="border rounded-lg px-3 py-2" />
+                   <input value={booking.date || ""} onChange={(e) => updateBookingItem(idx, { date: e.target.value })} className="border rounded-lg px-3 py-2" />
+                   <input value={booking.time || ""} onChange={(e) => updateBookingItem(idx, { time: e.target.value })} className="border rounded-lg px-3 py-2" />
                 </div>
                 <p>Personas: {booking.numPeople} - S/ {booking.totalPrice}</p>
                 <p>Contacto: {booking.whatsapp}</p>
-                <select value={booking.status || "pendiente"} onChange={(e) => {
-                  const updated = [...bookings];
-                  updated[idx] = { ...updated[idx], status: e.target.value as Booking["status"] };
-                  setBookings(updated);
-                }} className="border rounded-lg px-3 py-2">
+                <select value={booking.status || "pendiente"} onChange={(e) => updateBookingItem(idx, { status: e.target.value as Booking["status"] })} className="border rounded-lg px-3 py-2">
                   <option value="pendiente">Pendiente</option>
                   <option value="confirmada">Confirmada</option>
                   <option value="completada">Completada</option>
                   <option value="cancelada">Cancelada</option>
                 </select>
-                <textarea value={booking.notes || ""} onChange={(e) => {
-                  const updated = [...bookings];
-                  updated[idx] = { ...updated[idx], notes: e.target.value };
-                  setBookings(updated);
-                }} placeholder="Notas internas" className="w-full border rounded-lg px-3 py-2" rows={2} />
+                <textarea value={booking.notes || ""} onChange={(e) => updateBookingItem(idx, { notes: e.target.value })} placeholder="Notas internas" className="w-full border rounded-lg px-3 py-2" rows={2} />
                 <button onClick={() => setBookings((prev) => prev.filter((b) => b.id !== booking.id))} className="text-red-500 hover:text-red-700 inline-flex items-center gap-2">
                   <Trash2 size={14} /> Eliminar reserva
                 </button>
@@ -653,7 +635,7 @@ export const AdminPanel = () => {
           </div>
         )}
 
-        {activeTab === "images" && (
+        {activeTab === 'images' && (
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-xl border space-y-4">
               <h2 className="text-xl font-black uppercase tracking-wider">Imagen de Hero</h2>
@@ -664,10 +646,10 @@ export const AdminPanel = () => {
               )}
               <label className="block text-xs font-black uppercase tracking-wider">URL o Subir Archivo</label>
               <div className="flex gap-3">
-                <input 
+                 <input 
                   value={content.heroImageUrl || ""} 
-                  onChange={(e) => setContent({ ...content, heroImageUrl: e.target.value })} 
-                  onBlur={(e) => setContent((prev: any) => ({ ...prev, heroImageUrl: normalizeImageUrl(e.target.value) }))}
+                  onChange={(e) => setContent((prev) => ({ ...prev, heroImageUrl: e.target.value }))} 
+                  onBlur={(e) => setContent((prev) => ({ ...prev, heroImageUrl: normalizeImageUrl(e.target.value) }))}
                   placeholder="https://ejemplo.com/imagen.jpg"
                   className="flex-1 border rounded-lg px-4 py-3" 
                 />
@@ -693,10 +675,10 @@ export const AdminPanel = () => {
               )}
               <label className="block text-xs font-black uppercase tracking-wider">URL o Subir Archivo</label>
               <div className="flex gap-3">
-                <input 
+                 <input 
                   value={content.aboutImageUrl || ""} 
-                  onChange={(e) => setContent({ ...content, aboutImageUrl: e.target.value })} 
-                  onBlur={(e) => setContent((prev: any) => ({ ...prev, aboutImageUrl: normalizeImageUrl(e.target.value) }))}
+                  onChange={(e) => setContent((prev) => ({ ...prev, aboutImageUrl: e.target.value }))} 
+                  onBlur={(e) => setContent((prev) => ({ ...prev, aboutImageUrl: normalizeImageUrl(e.target.value) }))}
                   placeholder="https://ejemplo.com/imagen.jpg"
                   className="flex-1 border rounded-lg px-4 py-3" 
                 />
@@ -722,15 +704,15 @@ export const AdminPanel = () => {
                 <div
                   key={img.id}
                   draggable
-                  onDragStart={() => handleDragStart("galleryImages", img.id)}
+                  onDragStart={() => handleDragStart('galleryImages', img.id)}
                   onDragOver={(e) => e.preventDefault()}
-                  onDrop={() => handleDrop("galleryImages", img.id)}
+                  onDrop={() => handleDrop('galleryImages', img.id)}
                   onDragEnd={() => setDragState(null)}
-                  className={`border rounded-lg p-4 space-y-2 ${dragState?.listKey === "galleryImages" && dragState.id === img.id ? "opacity-60" : ""}`}
+                  className={`border rounded-lg p-4 space-y-2 ${dragState?.listKey === 'galleryImages' && dragState.id === img.id ? 'opacity-60' : ''}`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-xs font-black uppercase tracking-wider text-slate-500">Posición {index + 1}</p>
-                    {renderOrderControls("galleryImages", img.id, index, list.length)}
+                    {renderOrderControls('galleryImages', img.id, index, list.length)}
                   </div>
                   {img.src && (
                     <div className="relative w-full h-32 rounded-lg overflow-hidden border mb-3">
@@ -779,15 +761,15 @@ export const AdminPanel = () => {
                 <div
                   key={video.id}
                   draggable
-                  onDragStart={() => handleDragStart("videoLinks", video.id)}
+                  onDragStart={() => handleDragStart('videoLinks', video.id)}
                   onDragOver={(e) => e.preventDefault()}
-                  onDrop={() => handleDrop("videoLinks", video.id)}
+                  onDrop={() => handleDrop('videoLinks', video.id)}
                   onDragEnd={() => setDragState(null)}
-                  className={`border rounded-lg p-4 space-y-2 ${dragState?.listKey === "videoLinks" && dragState.id === video.id ? "opacity-60" : ""}`}
+                  className={`border rounded-lg p-4 space-y-2 ${dragState?.listKey === 'videoLinks' && dragState.id === video.id ? 'opacity-60' : ''}`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-xs font-black uppercase tracking-wider text-slate-500">Posición {index + 1}</p>
-                    {renderOrderControls("videoLinks", video.id, index, list.length)}
+                    {renderOrderControls('videoLinks', video.id, index, list.length)}
                   </div>
                   <label className="block text-xs font-black uppercase tracking-wider">Título (opcional)</label>
                   <input
@@ -823,7 +805,7 @@ export const AdminPanel = () => {
           </div>
         )}
 
-        {activeTab === "experience" && (
+        {activeTab === 'experience' && (
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-xl border space-y-4">
               <div className="flex justify-between items-center">
@@ -837,15 +819,15 @@ export const AdminPanel = () => {
                 <div
                   key={img.id}
                   draggable
-                  onDragStart={() => handleDragStart("experienceImages", img.id)}
+                  onDragStart={() => handleDragStart('experienceImages', img.id)}
                   onDragOver={(e) => e.preventDefault()}
-                  onDrop={() => handleDrop("experienceImages", img.id)}
+                  onDrop={() => handleDrop('experienceImages', img.id)}
                   onDragEnd={() => setDragState(null)}
-                  className={`border rounded-lg p-4 space-y-2 ${dragState?.listKey === "experienceImages" && dragState.id === img.id ? "opacity-60" : ""}`}
+                  className={`border rounded-lg p-4 space-y-2 ${dragState?.listKey === 'experienceImages' && dragState.id === img.id ? 'opacity-60' : ''}`}
                 >
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-black text-sm uppercase">{idx + 1}. {img.alt}</h3>
-                    {renderOrderControls("experienceImages", img.id, idx, list.length)}
+                    {renderOrderControls('experienceImages', img.id, idx, list.length)}
                   </div>
                   {img.src && (
                     <div className="relative w-full h-40 rounded-lg overflow-hidden border">
@@ -886,7 +868,7 @@ export const AdminPanel = () => {
           </div>
         )}
 
-        {activeTab === "reports" && (
+        {activeTab === 'reports' && (
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
             <div className="bg-white p-5 rounded-xl border"><p className="text-xs uppercase font-black">Reservas</p><p className="text-3xl font-black">{reports.totalBookings}</p></div>
             <div className="bg-white p-5 rounded-xl border"><p className="text-xs uppercase font-black">Confirmadas</p><p className="text-3xl font-black">{reports.confirmed}</p></div>
@@ -896,7 +878,7 @@ export const AdminPanel = () => {
           </div>
         )}
 
-        {activeTab === "settings" && (
+        {activeTab === 'settings' && (
           <div className="bg-white p-6 rounded-xl border space-y-4">
             <label className="block text-xs font-black uppercase tracking-wider">Nombre del sitio</label>
             <input value={settings.siteName} onChange={(e) => setSettings({ ...settings, siteName: e.target.value })} className="w-full border rounded-lg px-4 py-3" />

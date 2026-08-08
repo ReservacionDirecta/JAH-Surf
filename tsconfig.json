@@ -23,6 +23,9 @@
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noImplicitAny": true,
     "types": ["vite/client"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],

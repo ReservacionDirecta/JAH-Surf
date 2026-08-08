@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from "react";
+import { Component, ErrorInfo, ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
@@ -18,33 +18,20 @@ export class ErrorBoundary extends Component<Props, State> {
     };
   }
 
-  public static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  public render() {
+  render() {
     const { hasError, error } = this.state;
     const { children } = this.props;
 
     if (hasError) {
-      let errorMessage = "Ocurrió un error inesperado.";
-      
-      try {
-        // Check if it's a Firestore error JSON
-        const firestoreError = JSON.parse(error?.message || "");
-        if (firestoreError.error) {
-          errorMessage = `Error de base de datos: ${firestoreError.error}`;
-        }
-      } catch (e) {
-        // Not a JSON error, use the raw message if available
-        if (error?.message) {
-          errorMessage = error.message;
-        }
-      }
+      const errorMessage = error?.message || "Ocurrió un error inesperado.";
 
       return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">

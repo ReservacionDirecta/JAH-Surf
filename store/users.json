@@ -1,0 +1,10 @@
+[
+  {
+    "id": "357396e1-b239-4fd8-aaab-f1599d58f5e4",
+    "email": "admin@jahsurfperu.com",
+    "password": "d0a112266c09b0c55effc6c30d621e1f9a5eb320b8d7151cccee03313dcea3f504bceb4ab0055790038c87dcc069b5e6b434fca50c41e47bf393154356c6dd95",
+    "salt": "b0a34e2df509ca25b70dc5f2fa1cea6b",
+    "role": "admin",
+    "createdAt": "2026-08-08T17:20:40.854Z"
+  }
+]

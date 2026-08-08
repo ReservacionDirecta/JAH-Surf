@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express, { Request, Response, NextFunction } from "express";
 import { createServer as createViteServer } from "vite";
 import fs from "fs";
@@ -10,7 +11,6 @@ import Busboy from "busboy";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Types
 interface AuthUser {
   id: string;
   email: string;
@@ -19,13 +19,27 @@ interface AuthUser {
 
 interface StoredUser extends AuthUser {
   password: string; // hashed
+  salt: string;
   createdAt: string;
 }
 
-// Ensure environment variables
-const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-change-in-production';
+declare global {
+  namespace Express {
+    interface Request {
+      user?: AuthUser;
+    }
+  }
+}
+
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@jahsurfperu.com';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Admin123!';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+if (!ADMIN_PASSWORD) {
+  throw new Error('ADMIN_PASSWORD environment variable is required');
+}
 const JWT_EXPIRY = '7d';
 
 async function startServer() {
@@ -33,8 +47,8 @@ async function startServer() {
   const PORT = Number(process.env.PORT || 3001);
 
   // Allow larger payloads for admin content updates (e.g., base64 image fallbacks).
-  app.use(express.json({ limit: '25mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '25mb' }));
+  app.use(express.json({ limit: '1mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
   // Ensure /store exists (for local dev, Railway should have it mounted)
   const STORE_PATH = process.env.STORE_PATH || "/store";
@@ -47,17 +61,19 @@ async function startServer() {
     }
   }
 
-  // Utility: Hash password
-  function hashPassword(password: string): string {
-    return crypto.createHash('sha256').update(password + JWT_SECRET).digest('hex');
+  function hashPassword(password: string, salt: string): string {
+    return crypto.scryptSync(password, salt, 64).toString('hex');
   }
 
-  // Utility: Get users file path
+  function verifyPassword(password: string, salt: string, hash: string): boolean {
+    const candidate = crypto.scryptSync(password, salt, 64).toString('hex');
+    return crypto.timingSafeEqual(Buffer.from(candidate, 'hex'), Buffer.from(hash, 'hex'));
+  }
+
   function getUsersPath(): string {
     return path.join(STORE_PATH, 'users.json');
   }
 
-  // Utility: Load users
   function loadUsers(): StoredUser[] {
     const usersPath = getUsersPath();
     if (!fs.existsSync(usersPath)) {
@@ -72,7 +88,6 @@ async function startServer() {
     }
   }
 
-  // Utility: Save users
   function saveUsers(users: StoredUser[]): void {
     const usersPath = getUsersPath();
     fs.writeFileSync(usersPath, JSON.stringify(users, null, 2));
@@ -84,10 +99,12 @@ async function startServer() {
     const adminExists = users.some(u => u.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
 
     if (!adminExists) {
+      const salt = crypto.randomBytes(16).toString('hex');
       users.push({
         id: crypto.randomUUID(),
         email: ADMIN_EMAIL,
-        password: hashPassword(ADMIN_PASSWORD),
+        password: hashPassword(ADMIN_PASSWORD, salt),
+        salt,
         role: 'admin',
         createdAt: new Date().toISOString(),
       });
@@ -101,7 +118,6 @@ async function startServer() {
 
   ensureDefaultAdminUser();
 
-  // Middleware: Verify JWT
   function verifyJWT(token: string): AuthUser | null {
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as AuthUser;
@@ -111,20 +127,18 @@ async function startServer() {
     }
   }
 
-  // Middleware: Authenticate
   app.use((req, res, next) => {
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
       const user = verifyJWT(token);
       if (user) {
-        (req as any).user = user;
+        req.user = user;
       }
     }
     next();
   });
 
-  // Auth Routes
   app.post('/api/auth/login', (req, res) => {
     const { email, password } = req.body;
 
@@ -135,7 +149,7 @@ async function startServer() {
     const users = loadUsers();
     const user = users.find(u => u.email === email);
 
-    if (!user || user.password !== hashPassword(password)) {
+    if (!user || !verifyPassword(password, user.salt, user.password)) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
@@ -171,10 +185,12 @@ async function startServer() {
       return res.status(409).json({ message: 'Email already registered' });
     }
 
+    const salt = crypto.randomBytes(16).toString('hex');
     const newUser: StoredUser = {
       id: crypto.randomUUID(),
       email,
-      password: hashPassword(password),
+      password: hashPassword(password, salt),
+      salt,
       role: email === ADMIN_EMAIL ? 'admin' : 'user',
       createdAt: new Date().toISOString(),
     };
@@ -199,7 +215,7 @@ async function startServer() {
   });
 
   app.get('/api/auth/verify', (req, res) => {
-    const user = (req as any).user;
+    const user = req.user;
 
     if (!user) {
       return res.status(401).json({ message: 'Unauthorized' });
@@ -213,14 +229,47 @@ async function startServer() {
     res.json({ success: true });
   });
 
-  // API Route to store data (protected)
+  app.post("/api/bookings", (req, res) => {
+    const { data } = req.body;
+    if (!data || !data.name || !data.date || !data.whatsapp) {
+      return res.status(400).json({ error: "Missing required booking fields" });
+    }
+
+    const filePath = path.join(STORE_PATH, "bookings.json");
+    try {
+      let existing: unknown[] = [];
+      if (fs.existsSync(filePath)) {
+        const raw = fs.readFileSync(filePath, "utf-8");
+        existing = raw ? JSON.parse(raw) : [];
+      }
+      if (!Array.isArray(existing)) existing = [];
+
+      const booking = {
+        id: `b-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`,
+        ...data,
+        status: 'pendiente',
+        timestamp: new Date().toISOString(),
+      };
+
+      existing.push(booking);
+      fs.writeFileSync(filePath, JSON.stringify(existing, null, 2));
+      return res.json({ success: true });
+    } catch (err) {
+      console.error("Booking save error:", err);
+      return res.status(500).json({ error: "Failed to save booking" });
+    }
+  });
+
   app.post("/api/store", (req, res) => {
-    const user = (req as any).user;
+    const user = req.user;
     if (!user || user.role !== 'admin') {
       return res.status(403).json({ error: "Forbidden" });
     }
 
     const { key, data, append = false } = req.body;
+    if (!/^[a-zA-Z0-9_-]+$/.test(key)) {
+      return res.status(400).json({ error: "Invalid key format" });
+    }
     if (!key || data === undefined) {
       return res.status(400).json({ error: "Key and data are required" });
     }
@@ -228,7 +277,7 @@ async function startServer() {
     const filePath = path.join(STORE_PATH, `${key}.json`);
     try {
       if (append) {
-        let existingData: any = [];
+        let existingData: unknown[] = [];
         if (fs.existsSync(filePath)) {
           const raw = fs.readFileSync(filePath, "utf-8");
           existingData = raw ? JSON.parse(raw) : [];
@@ -251,9 +300,16 @@ async function startServer() {
     }
   });
 
-  // API Route to retrieve data
   app.get("/api/store/:key", (req, res) => {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
     const { key } = req.params;
+    if (!/^[a-zA-Z0-9_-]+$/.test(key)) {
+      return res.status(400).json({ error: "Invalid key format" });
+    }
     const filePath = path.join(STORE_PATH, `${key}.json`);
 
     if (!fs.existsSync(filePath)) {
@@ -269,8 +325,12 @@ async function startServer() {
     }
   });
 
-  // API Route to list all stored keys
   app.get("/api/store", (req, res) => {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
     try {
       if (!fs.existsSync(STORE_PATH)) {
         return res.json([]);
@@ -295,9 +355,8 @@ async function startServer() {
     }
   }
 
-  // API Route to upload images (protected)
   app.post("/api/upload", (req, res) => {
-    const user = (req as any).user;
+    const user = req.user;
     if (!user || user.role !== 'admin') {
       return res.status(403).json({ error: "Forbidden" });
     }
@@ -386,7 +445,6 @@ async function startServer() {
     req.pipe(bb);
   });
 
-  // Serve uploaded images
   app.use('/api/images', express.static(IMAGES_PATH, {
     maxAge: '7d',
     etag: false,
@@ -395,7 +453,6 @@ async function startServer() {
     }
   }));
 
-  // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: {

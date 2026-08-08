@@ -12,23 +12,12 @@ export interface AuthResponse {
   user: AuthUser;
 }
 
-export interface LoginPayload {
-  email: string;
-  password: string;
-}
 
-export interface RegisterPayload {
-  email: string;
-  password: string;
-}
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
 
-/**
- * Login with email and password
- */
 export async function login(email: string, password: string): Promise<AuthResponse> {
   const response = await fetch(`${API_BASE}/api/auth/login`, {
     method: 'POST',
@@ -47,9 +36,6 @@ export async function login(email: string, password: string): Promise<AuthRespon
   return data;
 }
 
-/**
- * Register a new user
- */
 export async function register(email: string, password: string): Promise<AuthResponse> {
   const response = await fetch(`${API_BASE}/api/auth/register`, {
     method: 'POST',
@@ -68,47 +54,22 @@ export async function register(email: string, password: string): Promise<AuthRes
   return data;
 }
 
-/**
- * Logout - clears local storage
- */
 export function logout(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
 }
 
-/**
- * Get current token
- */
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
-/**
- * Get current user from localStorage
- */
 export function getCurrentUser(): AuthUser | null {
   const user = localStorage.getItem(USER_KEY);
   return user ? JSON.parse(user) : null;
 }
 
-/**
- * Check if user is authenticated
- */
-export function isAuthenticated(): boolean {
-  return !!getToken() && !!getCurrentUser();
-}
 
-/**
- * Check if current user is admin
- */
-export function isAdmin(): boolean {
-  const user = getCurrentUser();
-  return user?.role === 'admin';
-}
 
-/**
- * Verify token with server (for session restore)
- */
 export async function verifyToken(): Promise<AuthUser | null> {
   const token = getToken();
   if (!token) return null;
@@ -135,9 +96,6 @@ export async function verifyToken(): Promise<AuthUser | null> {
   }
 }
 
-/**
- * Helper to make authenticated API calls
- */
 export async function authenticatedFetch(
   url: string,
   options: RequestInit = {}
