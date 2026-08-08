@@ -301,12 +301,15 @@ async function startServer() {
   });
 
   app.get("/api/store/:key", (req, res) => {
-    const user = req.user;
-    if (!user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
+    const PUBLIC_KEYS = ['content', 'pricing'];
     const { key } = req.params;
+
+    if (!PUBLIC_KEYS.includes(key)) {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+    }
     if (!/^[a-zA-Z0-9_-]+$/.test(key)) {
       return res.status(400).json({ error: "Invalid key format" });
     }
