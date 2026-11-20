@@ -326,7 +326,7 @@ const Hero = () => {
       id="inicio"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className="relative min-h-[100dvh] flex flex-col justify-between overflow-hidden bg-slate-950 touch-pan-y"
+      className="relative min-h-[100svh] flex flex-col justify-between overflow-hidden bg-slate-950 touch-pan-y"
     >
       <div className="absolute inset-0 z-0">
         {showVideo && heroVideoUrl ? (
