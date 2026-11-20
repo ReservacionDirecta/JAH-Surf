@@ -21,7 +21,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { PRICE_TABLES } from '../constants';
-import { formatLatinDateInput, parseLatinDate } from '../utils/date';
+import { parseLatinDate } from '../utils/date';
+import { DatePicker } from './DatePicker';
 import { toWhatsAppNumber } from '../utils/whatsapp';
 import { useLanguage, formatDualPrice, toUsd, type Language } from '../i18n';
 
@@ -29,7 +30,11 @@ type Category = 'grupales' | 'individuales' | 'paddle' | 'otras';
 type Step = 1 | 2 | 3;
 type PaymentMethod = 'link' | 'qr' | 'transfer';
 
-const TIME_OPTIONS = ['9hs a 11hs', '12hs a 2pm', '3pm a 5pm'];
+const TIME_OPTIONS = [
+  { id: '9hs a 11hs', es: '9hs a 11hs', en: '9am – 11am' },
+  { id: '12hs a 2pm', es: '12hs a 2pm', en: '12pm – 2pm' },
+  { id: '3pm a 5pm', es: '3pm a 5pm', en: '3pm – 5pm' },
+];
 
 const COPY = {
   es: {
@@ -40,11 +45,11 @@ const COPY = {
       paddle: 'Paddle',
       otras: 'Otras',
     },
-    step1Title1: '1. Tipo de clase',
-    step1Title2: '2. Selecciona tu plan',
+    step1Title1: 'Tipo de clase',
+    step1Title2: 'Selecciona tu plan',
     classesPerMonth: (n: number) => `${n} clases al mes`,
     singleSession: 'Sesión única',
-    startDate: '3. Fecha de inicio',
+    startDate: 'Fecha de inicio',
     datePlaceholder: 'dd/mm/aaaa',
     preferredTime: 'Horario preferido',
     participants: 'Participantes',
@@ -100,11 +105,11 @@ const COPY = {
       paddle: 'SUP / Paddle',
       otras: 'Quiver & Extras',
     },
-    step1Title1: '1. Pick your session',
-    step1Title2: '2. Choose your pack',
+    step1Title1: 'Pick your session',
+    step1Title2: 'Choose your pack',
     classesPerMonth: (n: number) => `${n} sessions / month`,
     singleSession: 'Single drop-in session',
-    startDate: '3. Paddle-out date',
+    startDate: 'Paddle-out date',
     datePlaceholder: 'dd/mm/yyyy',
     preferredTime: 'Preferred tide / time',
     participants: 'Surfers',
@@ -173,19 +178,19 @@ const YAPE_PLIN_HOLDER = 'JAH SURF PERU S.A.C.';
 const BANK_ACCOUNTS = [
   {
     bank: 'BCP',
-    type: 'Cuenta Corriente Soles',
+    type: { es: 'Cuenta Corriente Soles', en: 'Checking Account (PEN)' },
     account: '193-2456789-0-12',
     cci: '00219300245678901215',
   },
   {
     bank: 'Interbank',
-    type: 'Cuenta Simple Soles',
+    type: { es: 'Cuenta Simple Soles', en: 'Simple Account (PEN)' },
     account: '200-3004567891',
     cci: '00320001300456789132',
   },
   {
     bank: 'BBVA',
-    type: 'Cuenta Ahorros Soles',
+    type: { es: 'Cuenta Ahorros Soles', en: 'Savings Account (PEN)' },
     account: '0011-0123-0200456789',
     cci: '01112300020045678901',
   },
@@ -343,19 +348,16 @@ const StepOne = ({
 
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
-          <FormField icon={Calendar} label={t.startDate}>
-            <input
-              type="text"
-              inputMode="numeric"
-              autoComplete="off"
-              maxLength={10}
-              value={date}
-              onChange={(e) => setDate(formatLatinDateInput(e.target.value))}
-              placeholder={t.datePlaceholder}
-              className="flex-1 min-w-0 bg-transparent outline-none text-base sm:text-sm font-medium text-slate-900"
-            />
-          </FormField>
-          {dateError && <p className="text-xs text-red-500 mt-1.5 font-medium">{dateError}</p>}
+          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+            {t.startDate}
+          </label>
+          <DatePicker
+            value={date}
+            onChange={setDate}
+            lang={lang}
+            error={dateError}
+            placeholder={t.datePlaceholder}
+          />
         </div>
 
         <div>
@@ -366,15 +368,15 @@ const StepOne = ({
             {TIME_OPTIONS.map((opt) => (
               <button
                 type="button"
-                key={opt}
-                onClick={() => setTime(opt)}
+                key={opt.id}
+                onClick={() => setTime(opt.id)}
                 className={`min-h-[44px] py-3 px-2 rounded-2xl text-xs font-bold transition-all touch-manipulation ${
-                  time === opt
+                  time === opt.id
                     ? 'bg-slate-900 text-white shadow-sm'
                     : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
                 }`}
               >
-                {opt}
+                {opt[lang]}
               </button>
             ))}
           </div>
@@ -682,7 +684,7 @@ export const BookingEngine = ({ defaultCategory, defaultPlanIndex, onClose }: Bo
   const [numPeople, setNumPeople] = useState(1);
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
-  const [time, setTime] = useState(TIME_OPTIONS[0]);
+  const [time, setTime] = useState(TIME_OPTIONS[0].id);
   const [whatsapp, setWhatsapp] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('qr');
   const [dateError, setDateError] = useState('');

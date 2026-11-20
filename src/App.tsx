@@ -135,6 +135,7 @@ const Navbar = () => {
             : 'bg-gradient-to-b from-slate-950/60 to-transparent pb-5 pt-[max(1.25rem,env(safe-area-inset-top))]'
         }`}
       >
+        <div className="rasta-stripe h-1 w-full absolute top-0 left-0" aria-hidden="true" />
         <div className="container mx-auto px-4 sm:px-6 flex justify-between items-center">
           <a
             href="#inicio"
@@ -148,7 +149,7 @@ const Navbar = () => {
               }`}
             >
               <span className="text-red-500">J</span>
-              <span className="text-yellow-400">A</span>
+              <span className={isScrolled ? 'text-amber-600' : 'text-yellow-400'}>A</span>
               <span className="text-green-500">H</span> SURF
             </span>
           </a>
@@ -367,12 +368,12 @@ const Hero = () => {
 
       <div className="container mx-auto px-4 sm:px-6 relative z-10 flex-1 flex flex-col justify-between items-center text-center pt-24 sm:pt-28 md:pt-32 pb-20 sm:pb-24">
         <div className="flex flex-col items-center max-w-3xl mx-auto">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-md text-white/95 text-xs font-bold uppercase tracking-[0.22em] mb-4 sm:mb-6 rounded-full border border-white/20">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-md text-white/95 text-[11px] sm:text-xs font-bold uppercase tracking-[0.16em] sm:tracking-[0.22em] mb-4 sm:mb-6 rounded-full border border-white/20">
             <MapPin size={13} className="text-secondary" />
             {lang === 'es' ? 'San Bartolo, Lima • Perú' : 'San Bartolo, Lima • Peru'}
           </span>
 
-          <h1 className="text-5xl sm:text-7xl md:text-8xl font-display font-black text-white mb-4 sm:mb-5 leading-[0.9] uppercase tracking-tight">
+          <h1 className="text-4xl sm:text-7xl md:text-8xl font-display font-black text-white mb-4 sm:mb-5 leading-[0.9] uppercase tracking-tight">
             {renderHeroTitle()}
           </h1>
 
@@ -401,12 +402,12 @@ const Hero = () => {
         </div>
       </div>
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 px-4 py-2 rounded-full bg-slate-950/50 backdrop-blur-md border border-white/15">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 px-3 py-0.5 rounded-full bg-slate-950/50 backdrop-blur-md border border-white/15">
         {heroVideoUrl && (
           <button
             type="button"
             onClick={() => setShowVideo((v) => !v)}
-            className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-white/90 hover:text-secondary pr-2 border-r border-white/20 transition-colors"
+            className="flex items-center justify-center gap-1.5 min-h-[44px] min-w-[44px] px-2.5 text-[11px] font-bold uppercase tracking-wider text-white/90 hover:text-secondary border-r border-white/20 transition-colors"
             title={showVideo ? 'Ver galería de fotos' : 'Ver video de fondo'}
           >
             {showVideo ? <ImageIcon size={13} /> : <Play size={13} />}
@@ -420,7 +421,7 @@ const Hero = () => {
           type="button"
           onClick={prevSlide}
           aria-label="Previous image"
-          className="text-white/75 hover:text-white transition-colors p-0.5"
+          className="text-white/75 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <ChevronLeft size={16} />
         </button>
@@ -886,18 +887,23 @@ const Contact = () => {
 const Footer = () => {
   const { lang } = useLanguage();
   return (
-    <footer className="bg-slate-950 text-white py-10">
+    <footer className="relative bg-slate-950 text-white pt-10 pb-24 sm:py-10">
+      <div className="rasta-stripe h-1 w-full absolute top-0 left-0" aria-hidden="true" />
       <div className="container mx-auto px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
         <div className="flex items-center gap-3">
           <Logo size="sm" shape="circle" className="w-10 h-10 text-[10px]" />
           <div>
-            <p className="font-display font-black uppercase tracking-wider text-sm">JAH SURF PERÚ</p>
+            <p className="font-display font-black uppercase tracking-wider text-sm">
+              <span className="text-red-500">J</span>
+              <span className={isScrolled ? 'text-amber-600' : 'text-yellow-400'}>A</span>
+              <span className="text-green-500">H</span> SURF PERÚ
+            </p>
             <p className="text-xs text-slate-400">
               {lang === 'es' ? 'San Bartolo • Escuela de Surf' : 'San Bartolo • Surf School & Guiding'}
             </p>
           </div>
         </div>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-400">
           © {new Date().getFullYear()} JAH SURF Perú.{' '}
           {lang === 'es' ? 'Todos los derechos reservados.' : 'All rights reserved.'}
         </p>

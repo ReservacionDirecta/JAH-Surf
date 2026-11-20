@@ -67,6 +67,9 @@
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
+  .rasta-stripe {
+    background: linear-gradient(90deg, #dc2626 0%, #dc2626 33.33%, #fbbf24 33.33%, #fbbf24 66.66%, #10b981 66.66%, #10b981 100%);
+  }
 }
 
 .glass {
