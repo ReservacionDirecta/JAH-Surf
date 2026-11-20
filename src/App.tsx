@@ -895,7 +895,7 @@ const Footer = () => {
           <div>
             <p className="font-display font-black uppercase tracking-wider text-sm">
               <span className="text-red-500">J</span>
-              <span className={isScrolled ? 'text-amber-600' : 'text-yellow-400'}>A</span>
+              <span className="text-yellow-400">A</span>
               <span className="text-green-500">H</span> SURF PERÚ
             </p>
             <p className="text-xs text-slate-400">
