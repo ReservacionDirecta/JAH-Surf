@@ -130,7 +130,7 @@ export const DatePicker = ({ value, onChange, lang, error, placeholder }: DatePi
 
       {/* Compact floating popover opening upward so it stays inside the booking card */}
       {open && (
-        <div className="absolute left-0 bottom-full mb-2 z-50 w-72 bg-white rounded-2xl border border-slate-200 shadow-xl p-3.5">
+        <div className="absolute left-0 bottom-full mb-2 z-50 w-full sm:w-[70%] sm:max-w-sm bg-white rounded-2xl border border-slate-200 shadow-xl p-3.5">
           <div className="flex gap-1.5 mb-2.5 pb-2.5 border-b border-slate-100">
             {quickPicks.map((qp) => {
               const qpVal = toLatin(qp.date);
