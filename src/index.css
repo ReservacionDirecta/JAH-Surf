@@ -17,7 +17,7 @@
     scroll-behavior: smooth;
     scroll-padding-top: 5rem;
     overflow-x: clip;
-    overscroll-behavior-x: none;
+    overscroll-behavior: none;
   }
 
   ::selection {
@@ -27,9 +27,9 @@
   
   body {
     @apply font-sans text-slate-900 bg-white antialiased;
-    overflow-x: hidden;
+    overflow-x: clip;
     max-width: 100%;
-    overscroll-behavior-x: none;
+    overscroll-behavior: none;
   }
 
   #root {

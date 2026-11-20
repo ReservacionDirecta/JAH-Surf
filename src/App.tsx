@@ -32,6 +32,7 @@ import { useSettings } from './hooks/useSettings';
 import { LanguageProvider, useLanguage, toUsd } from './i18n';
 
 import { BookingEngine } from './components/BookingEngine';
+import { FaqSection } from './components/FaqSection';
 import { VideoBackground } from './components/VideoBackground';
 import { AdminPanel } from './components/AdminPanel';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -942,6 +943,7 @@ export default function App() {
                       <SchoolExperience />
                       <Pricing onSelectCategory={setSelectedCategory} />
                       <Booking selectedCategory={selectedCategory} />
+                      <FaqSection />
                       <Contact />
                     </main>
                     <Footer />

@@ -128,9 +128,9 @@ export const DatePicker = ({ value, onChange, lang, error, placeholder }: DatePi
 
       {error && <p className="text-xs text-red-500 mt-1.5 font-medium">{error}</p>}
 
-      {/* Calendar popover */}
+      {/* Calendar panel (in-flow so parent container never clips it) */}
       {open && (
-        <div className="absolute left-0 right-0 sm:right-auto sm:w-80 mt-2 z-30 bg-white rounded-2xl border border-slate-200 shadow-2xl p-4">
+        <div className="mt-2 w-full sm:w-80 bg-white rounded-2xl border border-slate-200 shadow-lg p-4">
           <div className="flex gap-1.5 mb-3 pb-3 border-b border-slate-100">
             {quickPicks.map((qp) => {
               const qpVal = toLatin(qp.date);
