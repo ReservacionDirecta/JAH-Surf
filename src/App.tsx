@@ -131,8 +131,8 @@ const Navbar = () => {
       <nav
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
           isScrolled || isMobileMenuOpen
-            ? 'glass py-3 shadow-lg shadow-slate-900/5'
-            : 'bg-gradient-to-b from-slate-950/60 to-transparent py-5'
+            ? 'glass pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] shadow-lg shadow-slate-900/5'
+            : 'bg-gradient-to-b from-slate-950/60 to-transparent pb-5 pt-[max(1.25rem,env(safe-area-inset-top))]'
         }`}
       >
         <div className="container mx-auto px-4 sm:px-6 flex justify-between items-center">
@@ -194,7 +194,7 @@ const Navbar = () => {
             <button
               type="button"
               onClick={toggleLang}
-              className={`px-2.5 py-1.5 rounded-full text-xs font-bold uppercase border ${
+              className={`min-h-[44px] min-w-[44px] px-3 py-2 rounded-full text-xs font-bold uppercase border touch-manipulation ${
                 isScrolled || isMobileMenuOpen
                   ? 'border-slate-300 text-slate-900 bg-white'
                   : 'border-white/30 text-white bg-white/15 backdrop-blur-md'
@@ -204,7 +204,7 @@ const Navbar = () => {
             </button>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`p-2.5 rounded-full transition-colors ${
+              className={`min-h-[44px] min-w-[44px] flex items-center justify-center p-2.5 rounded-full transition-colors touch-manipulation ${
                 isScrolled || isMobileMenuOpen
                   ? 'text-slate-900 bg-slate-100'
                   : 'text-white bg-white/15 backdrop-blur-md'
@@ -266,6 +266,7 @@ const Hero = () => {
   const slides = gallerySlides.length > 0 ? gallerySlides : DEFAULT_HERO_IMAGES;
   const [activeSlide, setActiveSlide] = useState(0);
   const [showVideo, setShowVideo] = useState(Boolean(heroVideoUrl));
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
   useEffect(() => {
     setShowVideo(Boolean(heroVideoUrl));
@@ -289,10 +290,28 @@ const Hero = () => {
     setActiveSlide((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
+  const handleTouchStart = (e: React.TouchEvent<HTMLElement>) => {
+    setTouchStartX(e.touches[0]?.clientX ?? null);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLElement>) => {
+    if (touchStartX === null) return;
+    const endX = e.changedTouches[0]?.clientX ?? touchStartX;
+    const deltaX = endX - touchStartX;
+    if (deltaX > 45) {
+      prevSlide();
+    } else if (deltaX < -45) {
+      nextSlide();
+    }
+    setTouchStartX(null);
+  };
+
   return (
     <section
       id="inicio"
-      className="relative min-h-[680px] md:min-h-[92vh] flex items-center justify-center overflow-hidden bg-slate-950"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden bg-slate-950 touch-pan-y"
     >
       <div className="absolute inset-0 z-0">
         {showVideo && heroVideoUrl ? (
@@ -303,19 +322,22 @@ const Hero = () => {
           />
         ) : (
           <>
-            <AnimatePresence mode="sync">
-              <motion.img
-                key={slides[activeSlide]}
-                src={slides[activeSlide]}
-                alt="Surf en San Bartolo - JAH SURF"
-                initial={{ opacity: 0, scale: 1.04 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 1.1, ease: 'easeInOut' }}
-                className="absolute inset-0 w-full h-full object-cover"
-                fetchPriority="high"
-              />
-            </AnimatePresence>
+            <div className="absolute inset-0 overflow-hidden">
+              <div
+                className="flex h-full transition-transform duration-700 ease-out will-change-transform"
+                style={{ transform: `translateX(-${activeSlide * 50}%)` }}
+              >
+                {[...slides, ...slides].map((src, idx) => (
+                  <img
+                    key={`${src}-${idx}`}
+                    src={src}
+                    alt={`Surf en San Bartolo - JAH SURF ${idx + 1}`}
+                    className="flex-shrink-0 w-auto h-full object-cover"
+                    fetchPriority={idx === 0 ? 'high' : 'auto'}
+                  />
+                ))}
+              </div>
+            </div>
             <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-950/40 to-slate-950/85" />
           </>
         )}
@@ -862,6 +884,7 @@ const Footer = () => {
 
 const FloatingWhatsApp = () => {
   const { content } = useContent();
+  const { lang } = useLanguage();
   const waNumber = toWhatsAppNumber(content.contactWhatsApp);
 
   return (
@@ -869,8 +892,8 @@ const FloatingWhatsApp = () => {
       href={`https://wa.me/${waNumber}`}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Contactar por WhatsApp"
-      className="fixed bottom-5 right-5 z-40 w-14 h-14 bg-primary text-white rounded-full shadow-xl flex items-center justify-center hover:scale-105 transition-transform"
+      aria-label={lang === 'es' ? 'Contactar por WhatsApp' : 'Chat on WhatsApp'}
+      className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-[max(1.25rem,env(safe-area-inset-right))] z-40 w-14 h-14 bg-primary text-white rounded-full shadow-xl flex items-center justify-center hover:scale-105 transition-transform touch-manipulation"
     >
       <MessageCircle size={26} />
     </a>

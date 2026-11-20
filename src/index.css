@@ -55,6 +55,12 @@
   .custom-scrollbar::-webkit-scrollbar-thumb {
     @apply bg-slate-300 rounded-full hover:bg-slate-400 transition-colors;
   }
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 .glass {

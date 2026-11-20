@@ -225,7 +225,7 @@ const CopyButton = ({ value, label, lang }: { value: string; label?: string; lan
     <button
       type="button"
       onClick={handleCopy}
-      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+      className={`inline-flex items-center justify-center gap-1.5 min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 touch-manipulation ${
         copied
           ? 'bg-emerald-100 text-emerald-700'
           : 'bg-slate-100 text-slate-700 hover:bg-slate-200 active:scale-95'
@@ -286,7 +286,7 @@ const StepOne = ({
                   setCategory(id);
                   setPlanIndex(0);
                 }}
-                className={`relative flex flex-col items-center gap-2 py-3.5 px-3 rounded-2xl text-xs font-bold transition-all ${
+                className={`relative flex flex-col items-center justify-center gap-2 min-h-[44px] py-3.5 px-3 rounded-2xl text-xs font-bold transition-all touch-manipulation ${
                   active
                     ? 'bg-primary text-white shadow-md shadow-primary/20 ring-2 ring-primary ring-offset-1'
                     : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/80'
@@ -310,7 +310,7 @@ const StepOne = ({
                 type="button"
                 key={`${plan.name}-${i}`}
                 onClick={() => setPlanIndex(i)}
-                className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center justify-between gap-3 ${
+                className={`w-full text-left p-4 min-h-[44px] rounded-2xl border-2 transition-all flex items-center justify-between gap-3 touch-manipulation ${
                   selected
                     ? 'border-primary bg-primary/5 shadow-sm'
                     : 'border-slate-200/70 hover:border-slate-300 bg-white'
@@ -352,7 +352,7 @@ const StepOne = ({
               value={date}
               onChange={(e) => setDate(formatLatinDateInput(e.target.value))}
               placeholder={t.datePlaceholder}
-              className="flex-1 bg-transparent outline-none text-sm font-medium text-slate-900"
+              className="flex-1 min-w-0 bg-transparent outline-none text-base sm:text-sm font-medium text-slate-900"
             />
           </FormField>
           {dateError && <p className="text-xs text-red-500 mt-1.5 font-medium">{dateError}</p>}
@@ -368,7 +368,7 @@ const StepOne = ({
                 type="button"
                 key={opt}
                 onClick={() => setTime(opt)}
-                className={`py-3.5 px-2 rounded-2xl text-xs font-bold transition-all ${
+                className={`min-h-[44px] py-3 px-2 rounded-2xl text-xs font-bold transition-all touch-manipulation ${
                   time === opt
                     ? 'bg-slate-900 text-white shadow-sm'
                     : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
@@ -388,7 +388,7 @@ const StepOne = ({
             <button
               type="button"
               onClick={() => setNumPeople(Math.max(1, numPeople - 1))}
-              className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-100 transition-colors font-bold"
+              className="w-11 h-11 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-100 transition-colors font-bold touch-manipulation"
             >
               −
             </button>
@@ -396,7 +396,7 @@ const StepOne = ({
             <button
               type="button"
               onClick={() => setNumPeople(numPeople + 1)}
-              className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-100 transition-colors font-bold"
+              className="w-11 h-11 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-100 transition-colors font-bold touch-manipulation"
             >
               +
             </button>
@@ -568,7 +568,7 @@ const StepThree = ({
               type="button"
               key={id}
               onClick={() => setPaymentMethod(id)}
-              className={`flex flex-col items-center text-center p-3.5 rounded-2xl border-2 transition-all ${
+              className={`flex flex-col items-center justify-center text-center min-h-[44px] p-3 rounded-2xl border-2 transition-all touch-manipulation ${
                 paymentMethod === id
                   ? 'border-primary bg-primary/5 text-primary shadow-sm'
                   : 'border-slate-200/80 bg-white text-slate-600 hover:border-slate-300'
@@ -597,7 +597,7 @@ const StepThree = ({
             href={`https://pagos.jahsurfperu.com/checkout?amount=${totalPrice}&plan=${encodeURIComponent(planName)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full inline-flex items-center justify-center gap-2 bg-slate-900 text-white py-3 px-4 rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors"
+            className="w-full inline-flex items-center justify-center gap-2 min-h-[44px] bg-slate-900 text-white py-3 px-4 rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors touch-manipulation"
           >
             <ExternalLink size={14} />
             {t.linkCta(totalPrice)}
@@ -930,7 +930,7 @@ export const BookingEngine = ({ defaultCategory, defaultPlanIndex, onClose }: Bo
           type="button"
           onClick={onNextHandler}
           disabled={!canAdvance || isSubmitting}
-          className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-3.5 rounded-2xl font-bold text-sm hover:bg-primary/90 transition-all shadow-md shadow-primary/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+          className="flex-1 flex items-center justify-center gap-2 min-h-[44px] bg-primary text-white py-3.5 rounded-2xl font-bold text-sm hover:bg-primary/90 transition-all shadow-md shadow-primary/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none touch-manipulation"
         >
           {step === 3 ? (
             <>
