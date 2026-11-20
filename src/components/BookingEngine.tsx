@@ -270,7 +270,7 @@ const StepOne = ({
   time: string;
   setTime: (v: string) => void;
   dateError: string;
-  plans: readonly { name: string; price: number; classesPerMonth?: number }[];
+  plans: readonly { name: string; nameEn?: string; price: number; classesPerMonth?: number }[];
   totalPrice: number;
 }) => {
   const t = COPY[lang];
@@ -293,7 +293,7 @@ const StepOne = ({
                 }}
                 className={`relative flex flex-col items-center justify-center gap-2 min-h-[44px] py-3.5 px-3 rounded-2xl text-xs font-bold transition-all touch-manipulation ${
                   active
-                    ? 'bg-primary text-white shadow-md shadow-primary/20 ring-2 ring-primary ring-offset-1'
+                    ? 'bg-slate-900 text-white shadow-md shadow-slate-900/15 ring-2 ring-slate-900 ring-offset-1'
                     : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/80'
                 }`}
               >
@@ -330,7 +330,9 @@ const StepOne = ({
                     >
                       {selected && <Check size={10} strokeWidth={3} />}
                     </span>
-                    <p className="font-bold text-slate-900 text-sm truncate">{plan.name}</p>
+                    <p className="font-bold text-slate-900 text-sm truncate">
+                      {lang === 'en' ? plan.nameEn || plan.name : plan.name}
+                    </p>
                   </div>
                   <p className="text-xs text-slate-500 mt-1 pl-6">
                     {plan.classesPerMonth ? t.classesPerMonth(plan.classesPerMonth) : t.singleSession}
@@ -406,8 +408,10 @@ const StepOne = ({
         </div>
         <div className="text-right">
           <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{t.estimatedTotal}</p>
-          <p className="text-xl sm:text-2xl font-extrabold text-primary">{formatDualPrice(totalPrice)}</p>
-          <p className="text-xs text-slate-500">{selectedPlan.name}</p>
+          <p className="text-xl sm:text-2xl font-extrabold text-slate-900">{formatDualPrice(totalPrice)}</p>
+          <p className="text-xs text-slate-500">
+            {lang === 'en' ? selectedPlan.nameEn || selectedPlan.name : selectedPlan.name}
+          </p>
         </div>
       </div>
     </div>

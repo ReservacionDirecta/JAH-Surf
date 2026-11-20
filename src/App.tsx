@@ -140,18 +140,9 @@ const Navbar = () => {
           <a
             href="#inicio"
             aria-label="Ir al inicio de JAH SURF Peru"
-            className="transition-transform duration-300 hover:scale-[1.03] min-w-[44px] min-h-[44px] flex items-center gap-3"
+            className="transition-transform duration-300 hover:scale-[1.03] min-w-[44px] min-h-[44px] flex items-center"
           >
             <Logo size="sm" shape="circle" className="w-11 h-11 text-[10px]" />
-            <span
-              className={`hidden sm:inline font-display font-black tracking-wider text-sm uppercase ${
-                isScrolled ? 'text-slate-900' : 'text-white'
-              }`}
-            >
-              <span className="text-red-500">J</span>
-              <span className={isScrolled ? 'text-amber-600' : 'text-yellow-400'}>A</span>
-              <span className="text-green-500">H</span> SURF
-            </span>
           </a>
 
           <div className="hidden md:flex items-center gap-7">
