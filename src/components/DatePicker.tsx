@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Calendar, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { parseLatinDate } from '../utils/date';
 import type { Language } from '../i18n';
 
@@ -128,10 +129,31 @@ export const DatePicker = ({ value, onChange, lang, error, placeholder }: DatePi
 
       {error && <p className="text-xs text-red-500 mt-1.5 font-medium">{error}</p>}
 
-      {/* Calendar panel (in-flow so parent container never clips it) */}
-      {open && (
-        <div className="mt-2 w-full sm:w-80 bg-white rounded-2xl border border-slate-200 shadow-lg p-4">
-          <div className="flex gap-1.5 mb-3 pb-3 border-b border-slate-100">
+      {/* Floating modal calendar (never changes form height or gets clipped) */}
+      {open &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4"
+            onClick={() => setOpen(false)}
+          >
+            <div
+              className="w-full max-w-sm bg-white rounded-3xl border border-slate-200 shadow-2xl p-5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-black uppercase tracking-wider text-slate-500">
+                  {lang === 'es' ? 'Selecciona una fecha' : 'Pick a date'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label="Close calendar"
+                  className="min-w-[36px] min-h-[36px] rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="flex gap-1.5 mb-3 pb-3 border-b border-slate-100">
             {quickPicks.map((qp) => {
               const qpVal = toLatin(qp.date);
               const isSelected = value === qpVal;
@@ -217,8 +239,10 @@ export const DatePicker = ({ value, onChange, lang, error, placeholder }: DatePi
               );
             })}
           </div>
-        </div>
-      )}
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 };
