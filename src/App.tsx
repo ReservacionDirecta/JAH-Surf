@@ -147,7 +147,9 @@ const Navbar = () => {
                 isScrolled ? 'text-slate-900' : 'text-white'
               }`}
             >
-              JAH SURF
+              <span className="text-red-500">J</span>
+              <span className="text-yellow-400">A</span>
+              <span className="text-green-500">H</span> SURF
             </span>
           </a>
 
@@ -306,12 +308,32 @@ const Hero = () => {
     setTouchStartX(null);
   };
 
+  const heroTitle = content.heroTitle || 'JAH SURF';
+  const renderHeroTitle = () => {
+    const match = heroTitle.match(/^JAH(.*)$/i);
+    if (!match) return heroTitle;
+    return (
+      <>
+        <span className="text-red-500 drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]">
+          {heroTitle[0]}
+        </span>
+        <span className="text-yellow-400 drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]">
+          {heroTitle[1]}
+        </span>
+        <span className="text-green-500 drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]">
+          {heroTitle[2]}
+        </span>
+        <span>{match[1]}</span>
+      </>
+    );
+  };
+
   return (
     <section
       id="inicio"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden bg-slate-950 touch-pan-y"
+      className="relative min-h-[100dvh] flex flex-col justify-between overflow-hidden bg-slate-950 touch-pan-y"
     >
       <div className="absolute inset-0 z-0">
         {showVideo && heroVideoUrl ? (
@@ -343,34 +365,36 @@ const Hero = () => {
         )}
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center py-28 md:py-36">
-        <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-md text-white/95 text-xs font-bold uppercase tracking-[0.22em] mb-6 rounded-full border border-white/20">
-          <MapPin size={13} className="text-secondary" />
-          {lang === 'es' ? 'San Bartolo, Lima • Perú' : 'San Bartolo, Lima • Peru'}
-        </span>
+      <div className="container mx-auto px-4 sm:px-6 relative z-10 flex-1 flex flex-col justify-between items-center text-center pt-24 sm:pt-28 md:pt-32 pb-20 sm:pb-24">
+        <div className="flex flex-col items-center max-w-3xl mx-auto">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-md text-white/95 text-xs font-bold uppercase tracking-[0.22em] mb-4 sm:mb-6 rounded-full border border-white/20">
+            <MapPin size={13} className="text-secondary" />
+            {lang === 'es' ? 'San Bartolo, Lima • Perú' : 'San Bartolo, Lima • Peru'}
+          </span>
 
-        <h1 className="text-5xl sm:text-7xl md:text-8xl font-display font-black text-white mb-5 leading-[0.9] uppercase tracking-tight">
-          {content.heroTitle || 'JAH SURF'}
-        </h1>
+          <h1 className="text-5xl sm:text-7xl md:text-8xl font-display font-black text-white mb-4 sm:mb-5 leading-[0.9] uppercase tracking-tight">
+            {renderHeroTitle()}
+          </h1>
 
-        <p className="text-base sm:text-xl md:text-2xl text-white/90 mb-10 max-w-2xl mx-auto font-normal leading-relaxed">
-          {lang === 'es'
-            ? content.heroSubtitle ||
-              'Clases de surf para locales y surf guiding en San Bartolo, Peñascal y La Isla. Instructores certificados y equipo completo incluido.'
-            : 'Score year-round swell in San Bartolo, Peñascal & La Isla. Surf lessons for all levels & local surf guiding with our local crew — quiver & wetsuit included.'}
-        </p>
+          <p className="text-sm sm:text-lg md:text-2xl text-white/90 max-w-2xl mx-auto font-normal leading-relaxed">
+            {lang === 'es'
+              ? content.heroSubtitle ||
+                'Clases de surf para locales y surf guiding en San Bartolo, Peñascal y La Isla. Instructores certificados y equipo completo incluido.'
+              : 'Score year-round swell in San Bartolo, Peñascal & La Isla. Surf lessons for all levels & local surf guiding with our local crew — quiver & wetsuit included.'}
+          </p>
+        </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+        <div className="w-full max-w-md sm:max-w-none flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mt-8">
           <a
             href="#reserva"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-primary text-white px-8 py-4 rounded-full font-bold text-sm sm:text-base uppercase tracking-wider hover:bg-primary/90 transition-all shadow-xl shadow-primary/30"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-primary text-white px-8 py-3.5 sm:py-4 rounded-full font-bold text-sm sm:text-base uppercase tracking-wider hover:bg-primary/90 transition-all shadow-xl shadow-primary/30"
           >
             {lang === 'es' ? 'Reservar Clase' : 'Lock In Your Session'}
             <ArrowRight size={18} />
           </a>
           <a
             href="#clases"
-            className="w-full sm:w-auto bg-white/10 backdrop-blur-md text-white px-8 py-4 rounded-full font-bold text-sm sm:text-base uppercase tracking-wider hover:bg-white/20 transition-all border border-white/25"
+            className="w-full sm:w-auto bg-white/10 backdrop-blur-md text-white px-8 py-3.5 sm:py-4 rounded-full font-bold text-sm sm:text-base uppercase tracking-wider hover:bg-white/20 transition-all border border-white/25"
           >
             {lang === 'es' ? 'Explorar Planes' : 'Explore Plans'}
           </a>
