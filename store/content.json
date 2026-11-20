@@ -1,0 +1,34 @@
+{
+  "heroTitle": "Aprende a surfear en las mejores olas de San Bartolo",
+  "heroSubtitle": "Clases personalizadas para todos los niveles y surf guiding en Peñascal, La Isla y el sur de Lima.",
+  "heroImageUrl": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&w=1920&q=80",
+  "experienceImages": [
+    {
+      "id": "exp-1",
+      "src": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&w=1400&q=80",
+      "alt": "Surf en San Bartolo"
+    },
+    {
+      "id": "exp-2",
+      "src": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=80",
+      "alt": "Olas de la costa sur de Lima"
+    },
+    {
+      "id": "exp-3",
+      "src": "https://images.unsplash.com/photo-1455729552865-3658a5d39692?auto=format&fit=crop&w=1400&q=80",
+      "alt": "Sesión de surf al amanecer"
+    },
+    {
+      "id": "exp-4",
+      "src": "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1400&q=80",
+      "alt": "Playa San Bartolo"
+    }
+  ],
+  "videoLinks": [
+    {
+      "id": "vid-1",
+      "url": "https://www.youtube.com/watch?v=ma67yOdMQfs",
+      "title": "Jah Surf Peru - San Bartolo"
+    }
+  ]
+}
