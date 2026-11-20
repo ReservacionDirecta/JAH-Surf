@@ -358,7 +358,7 @@ const Hero = () => {
         )}
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 relative z-10 flex-1 flex flex-col justify-between items-center text-center pt-24 sm:pt-28 md:pt-32 pb-20 sm:pb-24">
+      <div className="container mx-auto px-4 sm:px-6 relative z-10 flex-1 flex flex-col justify-between items-center text-center pt-[calc(5.5rem+env(safe-area-inset-top))] sm:pt-28 md:pt-32 pb-20 sm:pb-24">
         <div className="flex flex-col items-center max-w-3xl mx-auto">
           <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-md text-white/95 text-[11px] sm:text-xs font-bold uppercase tracking-[0.16em] sm:tracking-[0.22em] mb-4 sm:mb-6 rounded-full border border-white/20">
             <MapPin size={13} className="text-secondary" />

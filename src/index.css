@@ -18,6 +18,7 @@
     scroll-padding-top: 5rem;
     overflow-x: clip;
     overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
   ::selection {
