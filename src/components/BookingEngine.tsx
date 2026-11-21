@@ -813,6 +813,7 @@ export const BookingEngine = ({ defaultCategory, defaultPlanIndex, onClose }: Bo
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xl shadow-slate-900/5 overflow-hidden">
+      <div className="rasta-stripe h-1 w-full" aria-hidden="true" />
       <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 bg-slate-50/60">
         {onClose && (
           <button
@@ -831,7 +832,11 @@ export const BookingEngine = ({ defaultCategory, defaultPlanIndex, onClose }: Bo
                 <div className="flex items-center gap-2">
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                      s <= step ? 'bg-primary text-white shadow-sm' : 'bg-slate-200/70 text-slate-500'
+                      s < step
+                        ? 'bg-primary text-white shadow-sm'
+                        : s === step
+                        ? 'bg-slate-950 text-white shadow-sm'
+                        : 'bg-slate-200/70 text-slate-500'
                     }`}
                   >
                     {s < step ? <Check size={13} /> : s}
@@ -853,22 +858,11 @@ export const BookingEngine = ({ defaultCategory, defaultPlanIndex, onClose }: Bo
         </div>
       </div>
 
-      <div className="mx-5 sm:mx-7 mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200/80 px-4 py-3">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <span className="px-2.5 py-1 rounded-full bg-amber-500 text-white text-[11px] font-extrabold uppercase tracking-wider shrink-0">
-            {t.promoBadge}
-          </span>
-          <p className="text-xs sm:text-sm font-bold text-slate-800">{t.promoText}</p>
-        </div>
-        <a
-          href={`https://wa.me/${toWhatsAppNumber()}?text=${encodeURIComponent(t.promoWaMsg)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors shrink-0"
-        >
-          <MessageCircle size={14} />
-          {t.promoCta}
-        </a>
+      <div className="mx-5 sm:mx-7 mt-5 flex items-center justify-center gap-2.5 rounded-2xl bg-amber-50/90 border border-amber-200/80 px-4 py-2.5">
+        <span className="px-2.5 py-0.5 rounded-full bg-red-600 text-white text-[11px] font-extrabold uppercase tracking-wider shrink-0">
+          {t.promoBadge}
+        </span>
+        <p className="text-xs sm:text-sm font-bold text-slate-900">{t.promoText}</p>
       </div>
 
       <div className="p-5 sm:p-7">
