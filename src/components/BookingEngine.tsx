@@ -858,11 +858,26 @@ export const BookingEngine = ({ defaultCategory, defaultPlanIndex, onClose }: Bo
         </div>
       </div>
 
-      <div className="mx-5 sm:mx-7 mt-5 flex items-center justify-center gap-2.5 rounded-2xl bg-amber-50/90 border border-amber-200/80 px-4 py-2.5">
-        <span className="px-2.5 py-0.5 rounded-full bg-red-600 text-white text-[11px] font-extrabold uppercase tracking-wider shrink-0">
-          {t.promoBadge}
-        </span>
-        <p className="text-xs sm:text-sm font-bold text-slate-900">{t.promoText}</p>
+      <div className="relative mx-5 sm:mx-7 mt-5 rounded-2xl bg-slate-950 text-white px-5 py-4 overflow-hidden shadow-md">
+        <div className="rasta-stripe w-1.5 h-full absolute left-0 top-0" aria-hidden="true" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pl-2">
+          <div className="flex items-start sm:items-center gap-3 min-w-0">
+            <span className="px-2.5 py-1 rounded-full bg-red-600 text-white text-[11px] font-black uppercase tracking-wider shrink-0">
+              {t.promoBadge}
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-bold text-white leading-snug">{t.promoText}</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                {lang === 'es'
+                  ? 'Aplica en clases grupales, individuales y paddle.'
+                  : 'Valid on group, 1-on-1, and paddle sessions.'}
+              </p>
+            </div>
+          </div>
+          <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-400 shrink-0 pl-0 sm:pl-3">
+            {lang === 'es' ? '• Cupos limitados' : '• Limited spots'}
+          </span>
+        </div>
       </div>
 
       <div className="p-5 sm:p-7">
